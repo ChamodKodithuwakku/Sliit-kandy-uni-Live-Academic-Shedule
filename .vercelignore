@@ -1,0 +1,12 @@
+node_modules
+.npm-cache
+test-results
+tests
+tools
+docs
+/*.mp4
+/*.xlsx
+package.json
+package-lock.json
+README.md
+Start Timetable.cmd

@@ -1,0 +1,10 @@
+node_modules/
+.npm-cache/
+.vercel/
+test-results/
+*.log
+__pycache__/
+# Preserve the supplied originals locally; publish the deployment copies.
+/*.mp4
+/*.xlsx
+.claude/

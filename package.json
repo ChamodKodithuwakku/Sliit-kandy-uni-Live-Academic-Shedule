@@ -1,0 +1,14 @@
+{
+  "name": "sliit-kandy-live-display",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Frontend-only campus timetable and video signage, driven by the supplied Excel workbook.",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "test:browser": "node tests/browser.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0"
+  }
+}

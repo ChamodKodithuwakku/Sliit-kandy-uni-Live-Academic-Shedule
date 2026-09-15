@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#080f20">
+  <meta name="application-name" content="SLIIT Kandy Live Timetable">
+  <meta name="description" content="SLIIT Kandy UNI live classes and computer labs. Your campus schedule, updated throughout the day.">
+  <title>Live Academic Schedule · SLIIT Kandy UNI</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <script defer src="vendor/xlsx.full.min.js"></script>
+  <script defer src="js/local-file-help.js"></script>
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <main id="timetable-screen" class="display" aria-label="Live campus timetable">
+    <header class="masthead">
+      <div class="brand">
+        <img id="brand-logo" class="brand-logo" alt="SLIIT Kandy UNI" decoding="async" hidden>
+        <div class="brand-tagline">LIVE ACADEMIC SCHEDULE</div>
+      </div>
+      <div class="clock-block" aria-label="Current local date and time">
+        <div class="date-block"><span id="clock-day">TODAY</span><span id="clock-date">—</span></div>
+        <div class="clock"><span id="clock-time">--:--</span><span class="clock-period"><span id="clock-seconds">00</span><span id="clock-ampm">AM</span></span></div>
+      </div>
+    </header>
+
+    <section class="schedule" aria-labelledby="schedule-title">
+      <div class="schedule-panel">
+        <div class="panel-heading">
+          <div class="panel-label">
+            <h1 id="schedule-title">LIVE LECTURES &amp; COMPUTER LABS</h1>
+            <span id="panel-day">Today's schedule</span>
+          </div>
+          <div class="panel-heading-right">
+            <span class="live-indicator"><span class="status-dot" aria-hidden="true"></span> LIVE</span>
+            <div class="session-totals" id="session-totals" hidden>
+              <span class="total ongoing-total"><span class="status-dot"></span><strong id="ongoing-count">0</strong> Ongoing</span>
+              <span class="totals-divider"></span>
+              <span class="total upcoming-total"><span class="status-dot"></span><strong id="upcoming-count">0</strong> Upcoming</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-area" id="table-area">
+          <div class="timetable" role="table" aria-label="Current and upcoming sessions" id="timetable" hidden>
+            <div class="table-header table-grid" role="row">
+              <div role="columnheader">MODULE CODE</div><div role="columnheader">MODULE NAME</div>
+              <div role="columnheader">LOCATION</div><div role="columnheader">START TIME</div><div role="columnheader">END TIME</div>
+              <div role="columnheader">STATUS</div><div role="columnheader">FACULTY</div>
+            </div>
+            <div id="session-rows" class="session-rows" role="rowgroup"></div>
+          </div>
+          <div id="empty-state" class="empty-state" role="status">
+            <div class="empty-orbit" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none"><rect x="10" y="12" width="28" height="27" rx="4" stroke="currentColor" stroke-width="1.6"/><path d="M10 21h28M17 8v8m14-8v8m-13 12h4m4 0h4m-12 5h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+            <span class="empty-eyebrow" id="empty-eyebrow">CONNECTING YOUR CAMPUS</span>
+            <h2 id="empty-title">Getting today's schedule ready</h2>
+            <p id="empty-message">Your live classes and computer labs will appear here shortly.</p>
+            <div class="loading-track" id="loading-track"><span></span></div>
+          </div>
+        </div>
+
+        <div class="board-status">
+          <span class="board-note"><span class="status-dot" id="board-status-dot"></span><span id="board-note">Your campus, in sync</span></span>
+          <button id="fullscreen-button" class="fullscreen-button" type="button" aria-label="Enter fullscreen" title="Fullscreen">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+          <div class="pagination" id="pagination" hidden>
+            <div class="page-bars" id="page-bars" aria-hidden="true"></div>
+            <span class="page-label">PAGE <strong id="page-number">01</strong><span class="page-slash">/</span><span id="page-total">01</span></span>
+          </div>
+          <span id="empty-board-note" class="empty-board-note">SLIIT KANDY UNI</span>
+        </div>
+      </div>
+    </section>
+    <noscript><div class="noscript">Enable JavaScript to view the live academic schedule.</div></noscript>
+  </main>
+  <div id="video-screen" class="video-screen" aria-hidden="true">
+    <video id="promo-video" autoplay muted playsinline preload="metadata" disablepictureinpicture disableremoteplayback aria-label="Campus promotional video"></video>
+  </div>
+</body>
+</html>
