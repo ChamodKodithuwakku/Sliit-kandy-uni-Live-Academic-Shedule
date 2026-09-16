@@ -45,6 +45,16 @@ function element(tag, className, text) {
   return node;
 }
 
+function icon(name) {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'icon');
+  svg.setAttribute('aria-hidden', 'true');
+  const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+  use.setAttribute('href', `#icon-${name}`);
+  svg.append(use);
+  return svg;
+}
+
 function makeTimeCell(value, className) {
   const cell = element('div', `session-time ${className}`);
   const time = element('time');
@@ -52,7 +62,9 @@ function makeTimeCell(value, className) {
   const [clock, period] = formatSessionTime(value).split(' ');
   time.append(element('span', 'session-time-value', clock));
   if (period) time.append(document.createTextNode(' '), element('span', 'session-time-period', period));
-  cell.append(time);
+  const chip = element('span', 'time-chip');
+  chip.append(icon('clock'), time);
+  cell.append(chip);
   return cell;
 }
 
@@ -72,13 +84,18 @@ function makeRow(session) {
   const row = element('div', `session-row table-grid ${session.status === 'ONGOING' ? 'is-ongoing' : 'is-upcoming'}`);
   row.setAttribute('role', 'row');
   row.dataset.sessionId = session.id;
-  const code = element('div', 'module-code', session.moduleCode || '—');
+  const facultyKind = /business/i.test(session.faculty) ? 'business' : /computing/i.test(session.faculty) ? 'computing' : 'general';
+  row.dataset.faculty = facultyKind;
+  const code = element('div', 'module-code');
+  code.append(element('span', 'code-badge', session.moduleCode || '—'));
   // An empty module name leaves the cell blank; the grid keeps the row height.
   const nameCell = element('div', 'module-name-cell');
   nameCell.append(element('span', 'module-name', session.moduleName || ''));
   const location = element('div', 'location');
   const meeting = session.room.match(/^(\d+)(?:st|nd|rd|th)\s+Floor Meeting Room$/i);
-  location.append(element('span', 'location-main', meeting ? `${meeting[1]}F` : session.room));
+  const room = element('span', 'location-heading');
+  room.append(icon('pin'), element('span', 'location-main', meeting ? `${meeting[1]}F` : session.room));
+  location.append(room);
   location.append(element('span', 'location-type', meeting ? 'MEETING ROOM' : session.locationType));
   location.setAttribute('aria-label', `${session.room}, ${session.locationType.toLowerCase()}`);
   const startTime = makeTimeCell(session.startTime, 'session-start');
@@ -104,10 +121,14 @@ function makeRow(session) {
     visibleProgress.set(session.id, { session, track, fill, caption });
   }
   const faculty = element('div', 'faculty');
+  const facultyIcon = element('span', 'faculty-icon');
+  facultyIcon.append(icon(facultyKind === 'business' ? 'briefcase' : facultyKind === 'computing' ? 'laptop' : 'academic'));
+  const facultyLabel = element('span', 'faculty-label');
   if (/^Faculty of /i.test(session.faculty)) {
-    faculty.append(element('span', 'faculty-prefix', 'FACULTY OF'));
-    faculty.append(element('span', 'faculty-name', session.faculty.replace(/^Faculty of /i, '')));
-  } else faculty.append(element('span', 'faculty-name', session.faculty));
+    facultyLabel.append(element('span', 'faculty-prefix', 'FACULTY OF'));
+    facultyLabel.append(element('span', 'faculty-name', session.faculty.replace(/^Faculty of /i, '')));
+  } else facultyLabel.append(element('span', 'faculty-name', session.faculty));
+  faculty.append(facultyIcon, facultyLabel);
   for (const cell of [code, nameCell, location, startTime, endTime, status, faculty]) {
     cell.setAttribute('role', 'cell');
     row.append(cell);
@@ -119,8 +140,11 @@ function pageCapacity() {
   const areaHeight = $('table-area').getBoundingClientRect().height;
   const headerHeight = document.querySelector('.table-header').getBoundingClientRect().height
     || Math.min(48, Math.max(35, innerHeight * 0.044));
+  const rowStyles = getComputedStyle($('session-rows'));
+  const gap = parseFloat(rowStyles.rowGap) || 0;
+  const padding = (parseFloat(rowStyles.paddingTop) || 0) + (parseFloat(rowStyles.paddingBottom) || 0);
   const minimumRow = innerWidth < 650 ? 84 : Math.max(60, innerWidth * 0.041);
-  return Math.max(2, Math.min(CONFIG.MAX_ROWS, Math.floor((areaHeight - headerHeight) / minimumRow)));
+  return Math.max(2, Math.min(CONFIG.MAX_ROWS, Math.floor((areaHeight - headerHeight - padding + gap) / (minimumRow + gap))));
 }
 
 function renderPagination() {
@@ -128,6 +152,7 @@ function renderPagination() {
   $('empty-board-note').hidden = true;
   setText('page-number', String(pageIndex + 1).padStart(2, '0'));
   setText('page-total', String(pages.length).padStart(2, '0'));
+  $('previous-page').disabled = $('next-page').disabled = pages.length < 2;
   const bars = document.createDocumentFragment();
   // Show a bounded window when the timetable contains many pages.
   const start = Math.max(0, Math.min(pageIndex - 3, pages.length - 7));
@@ -229,6 +254,10 @@ export function refreshSessions(force = false) {
 
 const cycle = new DisplayCycle($('promo-video'), CONFIG, mode => {
   const showingVideo = mode === 'VIDEO';
+  if (showingVideo) {
+    setText('video-status-text', `Playing Video ${cycle.currentIndex + 1} / ${cycle.playlist.length}`);
+    $('promo-video').setAttribute('aria-label', `Campus promotional Video ${cycle.currentIndex + 1}`);
+  }
   $('video-screen').classList.toggle('active', showingVideo);
   $('video-screen').setAttribute('aria-hidden', String(!showingVideo));
   $('timetable-screen').classList.toggle('video-active', showingVideo);
@@ -298,12 +327,13 @@ async function requestWakeLock() {
 }
 
 function setupBrand() {
-  // The logo image is the only brand mark. A missing file simply leaves the
-  // logo hidden so the header collapses gracefully and the timetable still loads.
+  // Start the branding sequence once the logo loads. A missing file hides the
+  // branding area so the header collapses gracefully and the timetable still loads.
   const logo = $('brand-logo');
-  if (!CONFIG.LOGO_PATH) { logo.hidden = true; return; }
-  logo.onload = () => { logo.hidden = false; };
-  logo.onerror = () => { logo.hidden = true; logo.removeAttribute('src'); };
+  const container = $('logo-container');
+  if (!CONFIG.LOGO_PATH) { logo.hidden = container.hidden = true; return; }
+  logo.onload = () => { logo.hidden = container.hidden = false; };
+  logo.onerror = () => { logo.hidden = container.hidden = true; logo.removeAttribute('src'); };
   logo.src = CONFIG.LOGO_PATH;
 }
 
@@ -315,6 +345,14 @@ document.addEventListener('pointerdown', function firstTouch(event) {
   requestFullscreen();
 });
 $('fullscreen-button').addEventListener('click', toggleFullscreen);
+for (const [id, direction] of [['previous-page', -1], ['next-page', 1]]) {
+  $(id).addEventListener('click', () => {
+    if (pages.length < 2) return;
+    pageIndex = (pageIndex + direction + pages.length) % pages.length;
+    renderTimetable();
+    restartPageTimer();
+  });
+}
 document.addEventListener('fullscreenchange', updateFullscreenButton);
 document.addEventListener('keydown', event => { if (event.key.toLowerCase() === 'f') requestFullscreen(); });
 document.addEventListener('visibilitychange', () => {

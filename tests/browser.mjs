@@ -31,7 +31,7 @@ try {
   record('Production uses the local device date/time and the clock ticks');
   await live.context.close();
 
-  const display = await newPage({ TEST_MODE: true, VIDEOS: [], PAGE_DURATION: 1200 });
+  const display = await newPage({ TEST_MODE: true, VIDEOS: [], PAGE_DURATION: 4000 });
   const requests = [];
   display.page.on('request', request => requests.push(request.url()));
   await display.page.goto(base);
@@ -40,7 +40,7 @@ try {
   assert.equal(await display.page.locator('#upcoming-count').textContent(), '29');
   assert.ok((await display.page.locator('#session-rows').textContent()).includes('Data Communications and Computer Networks I'));
   assert.equal(await display.page.locator('input,nav,footer').count(), 0);
-  assert.equal(await display.page.locator('button').count(), 1);
+  assert.equal(await display.page.locator('button').count(), 3);
   const fullscreenCalls = await display.page.evaluate(async () => {
     let calls = 0;
     document.documentElement.requestFullscreen = async () => { calls++; };
@@ -62,25 +62,28 @@ try {
   assert.ok(!/laborator/i.test(await display.page.locator('body').textContent()));
   record('Seven Excel-driven columns, Computer Lab labels, and elapsed-time bars are displayed');
   const crowdedRowHeight = await display.page.locator('.session-row').first().evaluate(row => row.getBoundingClientRect().height);
-  const flatLayout = await display.page.evaluate(() => ({
+  await display.page.waitForTimeout(450);
+  await display.page.screenshot({ path: 'test-results/white-dashboard-preview.png' });
+  const cardLayout = await display.page.evaluate(() => ({
     headerHeight: document.querySelector('.masthead').getBoundingClientRect().height,
     tableTop: document.querySelector('.table-header').getBoundingClientRect().top,
     tableHeight: document.querySelector('.table-area').getBoundingClientRect().height,
     rowCount: document.querySelectorAll('.session-row').length,
-    radius: getComputedStyle(document.querySelector('.schedule-panel')).borderRadius,
-    shadow: getComputedStyle(document.querySelector('.schedule-panel')).boxShadow,
-    statusBorder: getComputedStyle(document.querySelector('.status-pill')).borderWidth,
+    radius: getComputedStyle(document.querySelector('.table-area')).borderRadius,
+    shadow: getComputedStyle(document.querySelector('.table-area')).boxShadow,
+    rowRadius: getComputedStyle(document.querySelector('.session-row')).borderRadius,
+    background: getComputedStyle(document.body).backgroundColor,
     text: document.body.textContent
   }));
-  assert.equal(flatLayout.rowCount, 10);
-  assert.ok(flatLayout.headerHeight < 130 && flatLayout.tableTop < 180);
-  assert.ok(flatLayout.tableHeight > 1080 * 0.8);
-  assert.equal(flatLayout.radius, '0px');
-  assert.equal(flatLayout.shadow, 'none');
-  assert.equal(flatLayout.statusBorder, '0px');
-  assert.ok(!flatLayout.text.includes('TODAY ON CAMPUS') && !flatLayout.text.includes('LEARN. CONNECT. GROW.'));
-  record('Compact flat layout shows ten rows and gives over 80% of screen height to the table');
-  assert.ok(!/module name unavailable|unknown module|not found|\bN\/A\b/i.test(flatLayout.text));
+  assert.ok(cardLayout.rowCount >= 8 && cardLayout.rowCount <= 10, JSON.stringify(cardLayout));
+  assert.ok(cardLayout.headerHeight < 145 && cardLayout.tableTop < 230);
+  assert.ok(cardLayout.tableHeight > 1080 * 0.7);
+  assert.equal(cardLayout.radius, '20px');
+  assert.notEqual(cardLayout.shadow, 'none');
+  assert.equal(cardLayout.rowRadius, '14px');
+  assert.equal(cardLayout.background, 'rgb(255, 255, 255)');
+  record('White dashboard uses a rounded table card, floating rows, and readable display spacing');
+  assert.ok(!/module name unavailable|unknown module|not found|\bN\/A\b/i.test(cardLayout.text));
   const blankName = display.page.locator('.session-row').filter({ has: display.page.locator('.module-code', { hasText: /^IT1221$/ }) }).first();
   assert.equal((await blankName.locator('.module-name').textContent()).trim(), '');
   assert.equal(await blankName.locator('[role="cell"]').count(), 7);
@@ -88,13 +91,15 @@ try {
   record('A session without a recoverable module name leaves the cell blank and keeps the row layout');
   const brand = await display.page.evaluate(() => {
     const logo = document.querySelector('#brand-logo');
-    const box = logo.getBoundingClientRect();
+    // Measure the stable layout, not the image's animated opacity or scale.
+    const box = document.querySelector('#logo-container').getBoundingClientRect();
+    const logoStyle = getComputedStyle(logo);
     const masthead = document.querySelector('.masthead');
     return {
       visible: !logo.hidden && box.width > 0 && box.height > 0,
       height: box.height, left: box.left, top: box.top,
       mastheadHeight: masthead.getBoundingClientRect().height,
-      ratio: box.width / box.height, naturalRatio: logo.naturalWidth / logo.naturalHeight,
+      ratio: parseFloat(logoStyle.width) / parseFloat(logoStyle.height), naturalRatio: logo.naturalWidth / logo.naturalHeight,
       objectFit: getComputedStyle(logo).objectFit, radius: getComputedStyle(logo).borderRadius,
       text: masthead.textContent.replace(/\s+/g, ' ').trim(),
       symbol: document.querySelector('#brand-symbol, .brand-name')
@@ -114,16 +119,16 @@ try {
   assert.equal(await a406.locator('.location-type').textContent(), 'LECTURE HALL');
   record('A406 renders as Lecture Hall while A401–A404 remain configured computer labs');
   record('Actual Tuesday sessions load, faculty labels render, and pages advance automatically');
-  for (const [width, height] of [[1920,1080],[1600,900],[1366,768],[1280,720],[390,844]]) {
+  for (const [width, height] of [[1920,1080],[2560,1440],[3840,2160],[1600,900],[1366,768],[1280,720],[390,844]]) {
     await display.page.setViewportSize({ width, height });
-    await display.page.waitForTimeout(300);
+    await display.page.waitForTimeout(650);
     const layout = await display.page.evaluate(() => {
       const area = document.querySelector('#table-area').getBoundingClientRect();
       const rows = [...document.querySelectorAll('.session-row')].map(row => row.getBoundingClientRect());
       return {
         width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight,
         last: rows.at(-1)?.bottom, bottom: area.bottom,
-        overflow: [...document.querySelectorAll('.session-row .status-pill,.module-code,.faculty,.location-main,.session-time,.session-progress-caption')].filter(node => node.scrollWidth > node.clientWidth + 2).map(node => node.className),
+        overflow: [...document.querySelectorAll('.session-row .status-pill,.module-code,.code-badge,.faculty,.time-chip,.session-time,.session-progress-caption')].filter(node => node.scrollWidth > node.clientWidth + 2).map(node => node.className),
         cellOverflow: [...document.querySelectorAll('.session-row > [role="cell"]')].filter(node => node.getBoundingClientRect().height > node.parentElement.getBoundingClientRect().height + 1).map(node => node.className)
       };
     });
@@ -139,6 +144,27 @@ try {
   assert.deepEqual(display.errors, []);
   record('Workbook fetched once; fonts, library, and assets use local files');
   await display.context.close();
+
+  const preview = await newPage({ TEST_MODE: true, TEST_DAY: 'Thursday', TEST_TIME: '00:24', VIDEOS: [], PAGE_DURATION: 3600000 });
+  await preview.page.goto(base);
+  await preview.page.locator('.session-row').first().waitFor();
+  const facultyIcons = {};
+  const totalPages = Number(await preview.page.locator('#page-total').textContent());
+  for (let index = 0; index < totalPages; index++) {
+    Object.assign(facultyIcons, await preview.page.evaluate(() => Object.fromEntries([...document.querySelectorAll('.session-row')].map(row => [row.dataset.faculty, row.querySelector('.faculty-icon use').getAttribute('href')]))));
+    await preview.page.locator('#next-page').click();
+  }
+  assert.equal(await preview.page.locator('#page-number').textContent(), '01');
+  assert.equal(facultyIcons.computing, '#icon-laptop');
+  assert.equal(facultyIcons.business, '#icon-briefcase');
+  await preview.page.locator('#previous-page').click();
+  assert.equal(Number(await preview.page.locator('#page-number').textContent()), totalPages);
+  await preview.page.locator('#previous-page').click();
+  await preview.page.waitForTimeout(450);
+  await preview.page.screenshot({ path: 'test-results/white-dashboard-upcoming.png' });
+  assert.deepEqual(preview.errors, []);
+  record('Faculty icons are distinct and rounded pagination buttons move and wrap through the schedule');
+  await preview.context.close();
 
   const quiet = await newPage({ TEST_MODE: true, TEST_DAY: 'Wednesday', TEST_TIME: '18:00', VIDEOS: [] });
   await quiet.page.goto(base);
@@ -217,25 +243,42 @@ try {
   const videoTest = await newPage({ TEST_MODE: true, TIMETABLE_DURATION: 800, PAGE_DURATION: 200 });
   await videoTest.page.addInitScript(() => {
     window.playbackEvents = [];
+    let mediaLoad = 0;
+    let recordedLoad = -1;
+    document.addEventListener('loadstart', event => { if (event.target instanceof HTMLVideoElement) mediaLoad++; }, true);
     document.addEventListener('loadedmetadata', event => { if (event.target instanceof HTMLVideoElement) event.target.playbackRate = 8; }, true);
     for (const type of ['playing', 'ended']) document.addEventListener(type, event => {
       if (event.target instanceof HTMLVideoElement) {
+        // Buffer recovery fires "playing" again without starting another clip.
+        if (type === 'playing') {
+          if (recordedLoad === mediaLoad) return;
+          recordedLoad = mediaLoad;
+        }
         const entry = { type, file: event.target.currentSrc.split('/').pop(), duration: event.target.duration, page: document.querySelector('#page-number').textContent };
         window.playbackEvents.push(entry);
+        if (type === 'playing') setTimeout(() => { entry.badge = document.querySelector('#video-status-text').textContent; }, 0);
         if (type === 'ended') setTimeout(() => { entry.returnPage = document.querySelector('#page-number').textContent; }, 50);
       }
     }, true);
   });
   await videoTest.page.goto(base);
+  await videoTest.page.waitForFunction(() => document.querySelector('#promo-video').currentSrc.endsWith('/2.mp4') && document.querySelector('#video-screen').classList.contains('active'));
+  await videoTest.page.waitForTimeout(500);
+  await videoTest.page.screenshot({ path: 'test-results/white-video-display.png' });
   await videoTest.page.waitForFunction(() => window.playbackEvents.filter(event => event.type === 'playing').length >= 4, null, { timeout: 45000 });
+  await videoTest.page.waitForTimeout(50);
   const playback = await videoTest.page.evaluate(() => window.playbackEvents);
   assert.deepEqual(playback.filter(event => event.type === 'playing').slice(0,4).map(event => event.file), ['1.mp4','2.mp4','3.mp4','1.mp4']);
   assert.deepEqual(playback.filter(event => event.type === 'ended').slice(0,3).map(event => event.file), ['1.mp4','2.mp4','3.mp4']);
-  assert.ok(playback.find(event => event.file === '3.mp4').duration > 37);
+  for (const [file, duration] of [['1.mp4', 7.384], ['2.mp4', 61.045], ['3.mp4', 20.015]]) {
+    assert.ok(Math.abs(playback.find(event => event.file === file).duration - duration) < 0.1);
+  }
+  assert.deepEqual(playback.filter(event => event.type === 'playing').slice(0,4).map(event => event.badge), ['Playing Video 1 / 3', 'Playing Video 2 / 3', 'Playing Video 3 / 3', 'Playing Video 1 / 3']);
   for (const event of playback.filter(event => event.type === 'ended')) assert.equal(event.returnPage, event.page);
   assert.equal(await videoTest.page.locator('#promo-video').evaluate(video => getComputedStyle(video).objectFit), 'cover');
+  assert.equal(await videoTest.page.locator('#video-screen').evaluate(screen => getComputedStyle(screen).borderRadius), '20px');
   assert.deepEqual(videoTest.errors, []);
-  record('All three actual MP4s play to natural ends and loop 1 → 2 → 3 → 1');
+  record('All three replacement MP4s play to natural ends and loop 1 → 2 → 3 → 1 with an accurate status badge');
   record('Timetable pagination resumes after videos instead of restarting at page one');
   await videoTest.context.close();
 

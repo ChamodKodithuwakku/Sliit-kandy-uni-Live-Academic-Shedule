@@ -41,7 +41,7 @@ tests/                       Optional automated checks
 vercel.json                  Static deployment configuration
 ```
 
-The original workbook and 4K MP4 files remain at the project root and are excluded from Git and Vercel. Edit and publish the copies in `data/` and `videos/`. The included videos were converted to 1920×1080 H.264/AAC with fast-start metadata; the longest deployment copy is approximately 36 MiB.
+The original workbook and replacement 4K MP4 files remain at the project root and are excluded from Git and Vercel. Edit and publish the copies in `data/` and `videos/`. The three replacement videos are converted to 1920×1080 H.264/AAC with fast-start metadata, preserving their full durations. Video 1 (`1.mp4`) is 7.384 seconds, Video 2 (`2.mp4`) is 61.045 seconds, and Video 3 (`3.mp4`) is 20.015 seconds. The largest deployment copy is approximately 55 MiB.
 
 ## How the display works
 
@@ -57,7 +57,8 @@ The original workbook and 4K MP4 files remain at the project root and are exclud
 - Locations use **COMPUTER LAB** only when explicitly configured in `ROOM_TYPE_MAPPING`. A401, A402, A403, and A404 are configured as computer labs; A406 is a **LECTURE HALL**. Unlisted rooms default to lecture halls. Lecturer names and workbook notes stay off the display.
 - Ongoing sessions appear first. When they fit, they remain on every page while upcoming sessions rotate. When they exceed a page, ongoing pages receive more screen time. Pages resume after a video, so every page remains reachable.
 - Every two minutes of timetable display, the next video plays fullscreen to its natural end. The timetable timer then starts again. The cycle is `1 → 2 → 3 → 1…`.
-- Video playback defaults to muted, has no controls, and uses `object-fit: cover`. Failed or stalled videos are skipped; if every video fails, the timetable returns and the next cycle retries.
+- Video playback defaults to muted, has no transport controls, and uses `object-fit: cover`. Its rounded frame has a floating “Playing Video 1 / 3” badge that follows the active clip. Failed or stalled videos are skipped; if every video fails, the timetable returns and the next cycle retries.
+- The white dashboard uses blue computing badges, green business badges, distinct faculty icons, and a card table with seven unchanged columns. Previous/next buttons supplement automatic pagination; clicking either starts a fresh page interval. Layout spacing adapts to the display size, and reduced-motion preferences disable decorative animation.
 
 ## Replace the Excel timetable
 
@@ -162,7 +163,9 @@ These examples demonstrate the configuration shape; they are not active timetabl
 
 ## Logo
 
-The supplied logo lives at `assets/logo.png` and is referenced by `LOGO_PATH` in `config.js`. The header shows only this image (top left, 60–90 px tall, aspect ratio preserved) above the "LIVE ACADEMIC SCHEDULE" tagline; there is no text brand. The PNG has a white background, so `style.css` applies a CSS-only reversal (`invert` + `hue-rotate` with `mix-blend-mode: screen`) that removes the white and keeps the orange crest legible on the dark display. If the image cannot be loaded, the logo area is hidden and the timetable still runs.
+The supplied logo lives at `assets/logo.png` and is referenced by `LOGO_PATH` in `config.js`. The header shows this image (top left, 60–90 px tall at the target display resolution, aspect ratio preserved) above the "LIVE ACADEMIC SCHEDULE" tagline. The original navy wordmark and orange crest appear directly on the white header without color filters. If the image cannot be loaded, the logo area is hidden and the timetable still runs.
+
+The branding area repeats a 12-second CSS sequence: the logo appears at 0–3 seconds, fades and scales out at 3–4 seconds, “Heritage | Knowledge | Impact” appears at 4–8 seconds, the message fades out at 8–9 seconds, and the logo returns at 9–12 seconds. The message uses spaced navy serif typography, a gentle upward reveal, and expanding letter spacing. The logo fades in on initial load, remains front-facing, and stays visible across the loop boundary. Both states share a fixed area that preserves the logo dimensions, header height, and tagline position. Reduced-motion preferences show the static logo.
 
 ## Deploy to Vercel
 

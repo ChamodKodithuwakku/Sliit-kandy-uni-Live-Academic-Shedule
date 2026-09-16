@@ -11,6 +11,7 @@ export class DisplayCycle {
     this.playlist = orderedVideos(config);
     this.currentMode = 'TIMETABLE';
     this.nextIndex = 0;
+    this.currentIndex = -1;
     this.generation = 0;
     this.failed = 0;
     this.running = false;
@@ -47,7 +48,8 @@ export class DisplayCycle {
     this.isPlaying = false;
     this.currentMode = 'VIDEO';
     const token = ++this.generation;
-    const path = this.playlist[this.nextIndex];
+    this.currentIndex = this.nextIndex;
+    const path = this.playlist[this.currentIndex];
     this.nextIndex = (this.nextIndex + 1) % this.playlist.length;
     const active = () => this.running && this.generation === token;
     this.video.muted = this.config.VIDEO_MUTED;

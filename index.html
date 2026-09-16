@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#080f20">
+  <meta name="theme-color" content="#FFFFFF">
   <meta name="application-name" content="SLIIT Kandy Live Timetable">
   <meta name="description" content="SLIIT Kandy UNI live classes and computer labs. Your campus schedule, updated throughout the day.">
   <title>Live Academic Schedule · SLIIT Kandy UNI</title>
@@ -14,13 +14,26 @@
   <script type="module" src="app.js"></script>
 </head>
 <body>
+  <svg class="icon-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="icon-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M16 3v4M8 3v4M3 11h18m-13 5h2m4 0h2"/></symbol>
+    <symbol id="icon-laptop" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="13" rx="2"/><path d="m4 16-2 4a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1l-2-4M10 18h4"/></symbol>
+    <symbol id="icon-briefcase" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="14" rx="3"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12a22 22 0 0 0 18 0m-9 0v3"/></symbol>
+    <symbol id="icon-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+    <symbol id="icon-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="icon-arrow" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+    <symbol id="icon-academic" viewBox="0 0 24 24"><path d="m2 9 10-5 10 5-10 5L2 9Zm4 2v6c4 3 8 3 12 0v-6m4-2v8"/></symbol>
+  </svg>
   <main id="timetable-screen" class="display" aria-label="Live campus timetable">
     <header class="masthead">
       <div class="brand">
-        <img id="brand-logo" class="brand-logo" alt="SLIIT Kandy UNI" decoding="async" hidden>
+        <div id="logo-container" class="logo-container" role="img" aria-label="SLIIT Kandy UNI. Heritage | Knowledge | Impact" hidden>
+          <img id="brand-logo" class="brand-logo" alt="SLIIT Kandy UNI" decoding="async" hidden>
+          <div class="brand-message" aria-hidden="true">Heritage <span class="brand-divider">|</span> Knowledge <span class="brand-divider">|</span> Impact</div>
+        </div>
         <div class="brand-tagline">LIVE ACADEMIC SCHEDULE</div>
       </div>
       <div class="clock-block" aria-label="Current local date and time">
+        <span class="calendar-icon"><svg class="icon" aria-hidden="true"><use href="#icon-calendar"/></svg></span>
         <div class="date-block"><span id="clock-day">TODAY</span><span id="clock-date">—</span></div>
         <div class="clock"><span id="clock-time">--:--</span><span class="clock-period"><span id="clock-seconds">00</span><span id="clock-ampm">AM</span></span></div>
       </div>
@@ -30,7 +43,7 @@
       <div class="schedule-panel">
         <div class="panel-heading">
           <div class="panel-label">
-            <h1 id="schedule-title">LIVE LECTURES &amp; COMPUTER LABS</h1>
+            <h1 id="schedule-title"><svg class="icon" aria-hidden="true"><use href="#icon-laptop"/></svg>LIVE LECTURES &amp; COMPUTER LABS</h1>
             <span id="panel-day">Today's schedule</span>
           </div>
           <div class="panel-heading-right">
@@ -67,8 +80,10 @@
             <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           </button>
           <div class="pagination" id="pagination" hidden>
+            <button id="previous-page" class="page-button previous-page" type="button" aria-label="Previous schedule page"><svg class="icon" aria-hidden="true"><use href="#icon-arrow"/></svg></button>
             <div class="page-bars" id="page-bars" aria-hidden="true"></div>
             <span class="page-label">PAGE <strong id="page-number">01</strong><span class="page-slash">/</span><span id="page-total">01</span></span>
+            <button id="next-page" class="page-button" type="button" aria-label="Next schedule page"><svg class="icon" aria-hidden="true"><use href="#icon-arrow"/></svg></button>
           </div>
           <span id="empty-board-note" class="empty-board-note">SLIIT KANDY UNI</span>
         </div>
@@ -78,6 +93,7 @@
   </main>
   <div id="video-screen" class="video-screen" aria-hidden="true">
     <video id="promo-video" autoplay muted playsinline preload="metadata" disablepictureinpicture disableremoteplayback aria-label="Campus promotional video"></video>
+    <div class="video-status" role="status"><span class="status-dot" aria-hidden="true"></span><span id="video-status-text">Playing Video 1 / 3</span></div>
   </div>
 </body>
 </html>
