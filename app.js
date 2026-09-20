@@ -15,6 +15,7 @@ let retryTimer;
 let resizeTimer;
 let boundaryTimer;
 let wakeLock;
+let fullscreenRequestPending = false;
 let destroyed = false;
 const timers = [];
 const visibleProgress = new Map();
@@ -125,7 +126,7 @@ function makeRow(session) {
   facultyIcon.append(icon(facultyKind === 'business' ? 'briefcase' : facultyKind === 'computing' ? 'laptop' : 'academic'));
   const facultyLabel = element('span', 'faculty-label');
   if (/^Faculty of /i.test(session.faculty)) {
-    facultyLabel.append(element('span', 'faculty-prefix', 'FACULTY OF'));
+    facultyLabel.append(element('span', 'faculty-prefix', 'DEPARTMENT OF'));
     facultyLabel.append(element('span', 'faculty-name', session.faculty.replace(/^Faculty of /i, '')));
   } else facultyLabel.append(element('span', 'faculty-name', session.faculty));
   faculty.append(facultyIcon, facultyLabel);
@@ -291,27 +292,53 @@ async function initializeTimetable() {
   }
 }
 
+// Single entry point for every fullscreen request: page load, the click
+// fallback, the F key and the "+" button all go through here.
 async function enterFullscreen() {
   const root = document.documentElement;
   if (root.requestFullscreen) await root.requestFullscreen({ navigationUI: 'hide' });
   else if (root.webkitRequestFullscreen) await root.webkitRequestFullscreen();
+  else throw new Error('Fullscreen API unavailable');
+}
+
+function isFullscreen() {
+  return Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+}
+
+// Browsers reject fullscreen without a user gesture unless a site policy allows it.
+// After a rejected automatic attempt, tell the viewer that one click will do it.
+function showFullscreenPrompt(visible) {
+  const available = document.fullscreenEnabled || document.webkitFullscreenEnabled;
+  $('fullscreen-prompt').hidden = !(visible && available && !isFullscreen());
 }
 
 async function requestFullscreen() {
-  if (!CONFIG.ATTEMPT_FULLSCREEN || document.fullscreenElement) return;
-  try { await enterFullscreen(); } catch { /* User gesture may be required. */ }
+  if (!CONFIG.ATTEMPT_FULLSCREEN || isFullscreen() || fullscreenRequestPending) return;
+  fullscreenRequestPending = true;
+  try { await enterFullscreen(); } catch (error) {
+    if (CONFIG.DEBUG_MODE) console.info('Fullscreen permission denied; waiting for a click.', error);
+    showFullscreenPrompt(true);
+  } finally { fullscreenRequestPending = false; }
 }
 
 // The on-screen "+" control always works, even when automatic fullscreen is off.
 async function toggleFullscreen() {
+  if (fullscreenRequestPending) return;
   try {
     if (document.fullscreenElement) await document.exitFullscreen();
+    else if (document.webkitFullscreenElement) await document.webkitExitFullscreen();
     else await enterFullscreen();
   } catch { /* Fullscreen may be blocked by the embedding app. */ }
 }
 
 function updateFullscreenButton() {
-  const active = Boolean(document.fullscreenElement);
+  const active = isFullscreen();
+  if (active) {
+    // Fullscreen reached: the prompt and click fallback are no longer needed,
+    // so a later deliberate exit is respected instead of re-entering on the next click.
+    document.removeEventListener('click', firstFullscreenInteraction);
+    showFullscreenPrompt(false);
+  }
   const button = $('fullscreen-button');
   button.setAttribute('aria-label', active ? 'Exit fullscreen' : 'Enter fullscreen');
   button.title = active ? 'Exit fullscreen' : 'Fullscreen';
@@ -337,13 +364,13 @@ function setupBrand() {
   logo.src = CONFIG.LOGO_PATH;
 }
 
-// First touch anywhere enters fullscreen, except on the "+" button, which
-// handles fullscreen itself and must not be toggled twice by one tap.
-document.addEventListener('pointerdown', function firstTouch(event) {
+// A completed click works for both mouse and touch activation. Keep listening
+// after a rejected request, and stop once fullscreen opens so exiting is respected.
+function firstFullscreenInteraction(event) {
   if (event.target.closest?.('#fullscreen-button')) return;
-  document.removeEventListener('pointerdown', firstTouch);
   requestFullscreen();
-});
+}
+document.addEventListener('click', firstFullscreenInteraction);
 $('fullscreen-button').addEventListener('click', toggleFullscreen);
 for (const [id, direction] of [['previous-page', -1], ['next-page', 1]]) {
   $(id).addEventListener('click', () => {
@@ -354,6 +381,7 @@ for (const [id, direction] of [['previous-page', -1], ['next-page', 1]]) {
   });
 }
 document.addEventListener('fullscreenchange', updateFullscreenButton);
+document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
 document.addEventListener('keydown', event => { if (event.key.toLowerCase() === 'f') requestFullscreen(); });
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden && !destroyed) {

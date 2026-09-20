@@ -47,7 +47,6 @@
             <span id="panel-day">Today's schedule</span>
           </div>
           <div class="panel-heading-right">
-            <span class="live-indicator"><span class="status-dot" aria-hidden="true"></span> LIVE</span>
             <div class="session-totals" id="session-totals" hidden>
               <span class="total ongoing-total"><span class="status-dot"></span><strong id="ongoing-count">0</strong> Ongoing</span>
               <span class="totals-divider"></span>
@@ -61,7 +60,7 @@
             <div class="table-header table-grid" role="row">
               <div role="columnheader">MODULE CODE</div><div role="columnheader">MODULE NAME</div>
               <div role="columnheader">LOCATION</div><div role="columnheader">START TIME</div><div role="columnheader">END TIME</div>
-              <div role="columnheader">STATUS</div><div role="columnheader">FACULTY</div>
+              <div role="columnheader">STATUS</div><div role="columnheader">DEPARTMENT</div>
             </div>
             <div id="session-rows" class="session-rows" role="rowgroup"></div>
           </div>
@@ -91,9 +90,12 @@
     </section>
     <noscript><div class="noscript">Enable JavaScript to view the live academic schedule.</div></noscript>
   </main>
+  <div id="fullscreen-prompt" class="fullscreen-prompt" role="status" hidden>
+    <span class="status-dot" aria-hidden="true"></span>Click anywhere to enter fullscreen
+  </div>
   <div id="video-screen" class="video-screen" aria-hidden="true">
     <video id="promo-video" autoplay muted playsinline preload="metadata" disablepictureinpicture disableremoteplayback aria-label="Campus promotional video"></video>
-    <div class="video-status" role="status"><span class="status-dot" aria-hidden="true"></span><span id="video-status-text">Playing Video 1 / 3</span></div>
+    <div class="video-status" role="status"><span class="status-dot" aria-hidden="true"></span><span id="video-status-text">Playing Video 1 / 2</span></div>
   </div>
 </body>
 </html>

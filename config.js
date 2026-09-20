@@ -54,8 +54,9 @@ export const CONFIG = {
   // '2026-09-23': { useDay: 'Monday', exclude: ['JUL DEC 2026!C4'], add: [] }
   DATE_EXCEPTIONS: {},
   VIDEO_FOLDER: './videos/',
-  // Video 1, Video 2, Video 3: deployment copies of the replacement root MP4s.
-  VIDEOS: ['1.mp4', '2.mp4', '3.mp4'],
+  // Video 1, Video 2: deployment copies of the two replacement root MP4s.
+  // Cycle: timetable 2 min -> Video 1 -> timetable 2 min -> Video 2 -> repeat.
+  VIDEOS: ['1.mp4', '2.mp4'],
   VIDEO_MUTED: true,
   VIDEO_LOAD_TIMEOUT: 20000,
   VIDEO_STALL_TIMEOUT: 30000,

@@ -268,17 +268,17 @@ try {
   await videoTest.page.waitForFunction(() => window.playbackEvents.filter(event => event.type === 'playing').length >= 4, null, { timeout: 45000 });
   await videoTest.page.waitForTimeout(50);
   const playback = await videoTest.page.evaluate(() => window.playbackEvents);
-  assert.deepEqual(playback.filter(event => event.type === 'playing').slice(0,4).map(event => event.file), ['1.mp4','2.mp4','3.mp4','1.mp4']);
-  assert.deepEqual(playback.filter(event => event.type === 'ended').slice(0,3).map(event => event.file), ['1.mp4','2.mp4','3.mp4']);
-  for (const [file, duration] of [['1.mp4', 7.384], ['2.mp4', 61.045], ['3.mp4', 20.015]]) {
+  assert.deepEqual(playback.filter(event => event.type === 'playing').slice(0,4).map(event => event.file), ['1.mp4','2.mp4','1.mp4','2.mp4']);
+  assert.deepEqual(playback.filter(event => event.type === 'ended').slice(0,3).map(event => event.file), ['1.mp4','2.mp4','1.mp4']);
+  for (const [file, duration] of [['1.mp4', 12.655], ['2.mp4', 34.833]]) {
     assert.ok(Math.abs(playback.find(event => event.file === file).duration - duration) < 0.1);
   }
-  assert.deepEqual(playback.filter(event => event.type === 'playing').slice(0,4).map(event => event.badge), ['Playing Video 1 / 3', 'Playing Video 2 / 3', 'Playing Video 3 / 3', 'Playing Video 1 / 3']);
+  assert.deepEqual(playback.filter(event => event.type === 'playing').slice(0,4).map(event => event.badge), ['Playing Video 1 / 2', 'Playing Video 2 / 2', 'Playing Video 1 / 2', 'Playing Video 2 / 2']);
   for (const event of playback.filter(event => event.type === 'ended')) assert.equal(event.returnPage, event.page);
   assert.equal(await videoTest.page.locator('#promo-video').evaluate(video => getComputedStyle(video).objectFit), 'cover');
   assert.equal(await videoTest.page.locator('#video-screen').evaluate(screen => getComputedStyle(screen).borderRadius), '20px');
   assert.deepEqual(videoTest.errors, []);
-  record('All three replacement MP4s play to natural ends and loop 1 → 2 → 3 → 1 with an accurate status badge');
+  record('Both replacement MP4s play to natural ends and loop 1 → 2 → 1 with an accurate status badge');
   record('Timetable pagination resumes after videos instead of restarting at page one');
   await videoTest.context.close();
 
