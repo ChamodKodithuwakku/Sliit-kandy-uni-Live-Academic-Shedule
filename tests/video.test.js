@@ -43,10 +43,10 @@ test('exact two-minute board timer, natural video end, reset, and sequence wrap'
   assert.equal(video.played.at(-1), './videos/2.mp4');
   video.finish();
   t.mock.timers.tick(120000);
-  assert.equal(video.played.at(-1), './videos/3.mp4');
+  assert.equal(video.played.at(-1), './videos/1.mp4');
   video.finish();
   t.mock.timers.tick(120000);
-  assert.equal(video.played.at(-1), './videos/1.mp4');
+  assert.equal(video.played.at(-1), './videos/2.mp4');
   assert.deepEqual(modes.slice(0, 4), ['VIDEO', 'TIMETABLE', 'VIDEO', 'TIMETABLE']);
 });
 
@@ -60,12 +60,10 @@ test('failed files skip forward; all failed files return to a functioning timeta
   video.onerror();
   assert.equal(video.src, './videos/2.mp4');
   video.onerror();
-  assert.equal(video.src, './videos/3.mp4');
-  video.onerror();
   assert.equal(cycle.currentMode, 'TIMETABLE');
-  assert.equal(video.played.length, 3);
+  assert.equal(video.played.length, 2);
   t.mock.timers.tick(119999);
-  assert.equal(video.played.length, 3);
+  assert.equal(video.played.length, 2);
 });
 
 test('blocked unmuted autoplay retries muted and a stalled video recovers', async t => {
@@ -84,7 +82,7 @@ test('blocked unmuted autoplay retries muted and a stalled video recovers', asyn
   assert.equal(video.played.length, 2);
   t.mock.timers.tick(CONFIG.VIDEO_STALL_TIMEOUT + 1);
   cycle.checkPlayback();
-  assert.equal(cycle.nextIndex, 2);
+  assert.equal(cycle.nextIndex, 0); // Stall skipped to Video 2; the two-clip playlist wraps back to Video 1.
 });
 
 test('an empty video list leaves the timetable running without playback attempts', t => {

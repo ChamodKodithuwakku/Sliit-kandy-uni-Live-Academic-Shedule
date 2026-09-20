@@ -1,6 +1,6 @@
 # SLIIT Kandy UNI · Live academic display
 
-A fullscreen campus timetable for a 55-inch landscape Android display. The supplied Excel workbook drives the classes; the device's local date and time drive **ONGOING** and **UPCOMING** status. The screen alternates between the timetable and the three supplied campus videos.
+A fullscreen campus timetable for a 55-inch landscape Android display. The supplied Excel workbook drives the classes; the device's local date and time drive **ONGOING** and **UPCOMING** status. The screen alternates between the timetable and the two supplied campus videos.
 
 **HTML, CSS, vanilla JavaScript, locally bundled SheetJS, and HTML5 video.** No backend, database, login, API, or production build is needed. Node is used only for the optional automated development tests.
 
@@ -32,7 +32,7 @@ js/schedule.js               Time, date exceptions, and paging
 js/rooms.js                  Explicit room type mapping
 js/video.js                  Timetable/video state machine
 data/timetable.xlsx          Copy of your supplied workbook
-videos/1.mp4 ... 3.mp4        Optimized deployment videos
+videos/1.mp4, 2.mp4          Optimized deployment videos
 assets/fonts/                Bundled Inter font and license
 assets/favicon.svg           Generic academic icon
 vendor/                      SheetJS 0.20.3 and its license
@@ -41,7 +41,7 @@ tests/                       Optional automated checks
 vercel.json                  Static deployment configuration
 ```
 
-The original workbook and replacement 4K MP4 files remain at the project root and are excluded from Git and Vercel. Edit and publish the copies in `data/` and `videos/`. The three replacement videos are converted to 1920×1080 H.264/AAC with fast-start metadata, preserving their full durations. Video 1 (`1.mp4`) is 7.384 seconds, Video 2 (`2.mp4`) is 61.045 seconds, and Video 3 (`3.mp4`) is 20.015 seconds. The largest deployment copy is approximately 55 MiB.
+The original workbook and replacement 4K MP4 files remain at the project root and are excluded from Git and Vercel. Edit and publish the copies in `data/` and `videos/`. The two replacement videos are converted to 1920×1080 H.264/AAC with fast-start metadata, preserving their full durations. Video 1 (`1.mp4`) is 12.655 seconds and Video 2 (`2.mp4`) is 34.833 seconds. The largest deployment copy is approximately 16 MiB.
 
 ## How the display works
 
@@ -56,9 +56,9 @@ The original workbook and replacement 4K MP4 files remain at the project root an
 - Ongoing sessions show a green progress bar and a completion percentage, calculated from `(current time − start time) / (end time − start time)`. The values are clamped to 0–100% and updated in place; upcoming sessions have no elapsed-time bar. Progress is calculated at runtime and is never written to the workbook.
 - Locations use **COMPUTER LAB** only when explicitly configured in `ROOM_TYPE_MAPPING`. A401, A402, A403, and A404 are configured as computer labs; A406 is a **LECTURE HALL**. Unlisted rooms default to lecture halls. Lecturer names and workbook notes stay off the display.
 - Ongoing sessions appear first. When they fit, they remain on every page while upcoming sessions rotate. When they exceed a page, ongoing pages receive more screen time. Pages resume after a video, so every page remains reachable.
-- Every two minutes of timetable display, the next video plays fullscreen to its natural end. The timetable timer then starts again. The cycle is `1 → 2 → 3 → 1…`.
-- Video playback defaults to muted, has no transport controls, and uses `object-fit: cover`. Its rounded frame has a floating “Playing Video 1 / 3” badge that follows the active clip. Failed or stalled videos are skipped; if every video fails, the timetable returns and the next cycle retries.
-- The white dashboard uses blue computing badges, green business badges, distinct faculty icons, and a card table with seven unchanged columns. Previous/next buttons supplement automatic pagination; clicking either starts a fresh page interval. Layout spacing adapts to the display size, and reduced-motion preferences disable decorative animation.
+- Every two minutes of timetable display, the next video plays fullscreen to its natural end. The timetable timer then starts again. The cycle is `timetable (2 min) → Video 1 → timetable (2 min) → Video 2 → repeat`.
+- Video playback defaults to muted, has no transport controls, and uses `object-fit: cover`. Its rounded frame has a floating “Playing Video 1 / 2” badge that follows the active clip. Failed or stalled videos are skipped; if every video fails, the timetable returns and the next cycle retries.
+- The white dashboard uses blue computing badges, red business badges and icons, green ONGOING and yellow UPCOMING status colours, and a card table with seven unchanged columns. Previous/next buttons supplement automatic pagination; clicking either starts a fresh page interval. Layout spacing adapts to the display size, and reduced-motion preferences disable decorative animation.
 
 ## Replace the Excel timetable
 
@@ -177,6 +177,28 @@ The branding area repeats a 12-second CSS sequence: the logo appears at 0–3 se
 
 The project is prepared for deployment; this workspace task does not create a GitHub repository or publish a Vercel site.
 
+## Open a Chrome website link directly in fullscreen
+
+The page requests fullscreen as soon as it loads. Desktop Chrome needs a per-site automatic-fullscreen permission to allow this without a click. On Windows, run the following once from the project folder for the Live Server address:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\enable-automatic-fullscreen.ps1 -Url http://127.0.0.1:5501
+```
+
+Open `chrome://policy`, click **Reload policies**, then reopen the timetable URL. Restarting Chrome also applies the setting. The script adds Chrome's `AutomaticFullscreenAllowedForUrls` policy for this Windows user and this exact origin (including its port); Chrome may show a managed-browser indicator. For a deployed website, substitute its HTTPS URL and configure each display computer separately. Existing policy entries are preserved; an administrator's blocking policy takes precedence. See [Chrome's policy definition](https://chromium.googlesource.com/chromium/src/+/HEAD/components/policy/resources/templates/policy_definitions/ContentSettings/AutomaticFullscreenAllowedForUrls.yaml).
+
+To undo the permission, run the same command with `-Remove`. Without this permission the browser rejects the automatic request, so the page shows a small **Click anywhere to enter fullscreen** message; the next click or tap anywhere enters fullscreen and removes the message. The page retries after a rejected request and respects exiting fullscreen (the message does not return). The **+** button remains available as a manual fallback. The message is never shown where the Fullscreen API is unavailable, such as inside an embedding app that blocks it.
+
+To verify fullscreen behavior against a running local server:
+
+```powershell
+$env:TEST_URL = 'http://127.0.0.1:5501'
+node tests/fullscreen.mjs
+node tests/fullscreen.mjs --policy
+```
+
+The first check uses temporary test-browser permissions; `--policy` checks that the actual installed Chrome policy allows fullscreen on page load without a click.
+
 ## Android display setup
 
 1. Use a current Android Chrome browser or your display's compatible kiosk browser.
@@ -216,7 +238,7 @@ node tools/audit-workbook.mjs
 
 On restricted environments that block child-process isolation, run `node --test --test-isolation=none tests/timetable.test.js tests/video.test.js`. Use `BROWSER_CHANNEL=msedge` in your shell environment to test with installed Edge instead of Chrome. `TEST_URL` changes the browser test's URL.
 
-The logic tests cover all 311 actual session boundaries, the nine requested sample times on all weekdays, merged sessions, faculty and room rules, date changes, pagination, two-minute timing, stalled/missing media, and video order. Browser checks exercise actual Excel fetches, local assets, responsive layouts, live updates, error recovery, and all three real MP4s. Video tests accelerate playback only in the test browser; production playback speed remains normal.
+The logic tests cover all 311 actual session boundaries, the nine requested sample times on all weekdays, merged sessions, faculty and room rules, date changes, pagination, two-minute timing, stalled/missing media, and video order. Browser checks exercise actual Excel fetches, local assets, responsive layouts, live updates, error recovery, and both real MP4s. Video tests accelerate playback only in the test browser; production playback speed remains normal.
 
 Test screenshots and the full JSON workbook audit are written to `test-results/` and are excluded from deployment.
 
