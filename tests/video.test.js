@@ -18,17 +18,22 @@ test('video order uses natural filename sorting', () => {
   assert.deepEqual(orderedVideos({ ...CONFIG, VIDEOS: ['10.mp4', '2.mp4', '1.mp4', '2.mp4'] }), ['./videos/1.mp4', './videos/2.mp4', './videos/10.mp4']);
 });
 
+test('the configured playlist is the nine supplied videos in order', () => {
+  assert.deepEqual(orderedVideos(CONFIG), Array.from({ length: 9 }, (_, i) => `./videos/${i + 1}.mp4`));
+});
+
 test('exact two-minute board timer, natural video end, reset, and sequence wrap', t => {
   t.mock.timers.enable({ apis: ['setTimeout', 'setInterval', 'Date'] });
   const video = new MediaStub();
   const modes = [];
   const cycle = new DisplayCycle(video, CONFIG, mode => modes.push(mode));
+  const playlist = orderedVideos(CONFIG);
   t.after(() => cycle.dispose());
   cycle.startDisplayCycle();
   t.mock.timers.tick(119999);
   assert.equal(video.played.length, 0);
   t.mock.timers.tick(1);
-  assert.deepEqual(video.played, ['./videos/1.mp4']);
+  assert.deepEqual(video.played, [playlist[0]]);
   for (let i = 0; i < 150; i++) {
     video.currentTime++;
     video.ontimeupdate();
@@ -40,13 +45,15 @@ test('exact two-minute board timer, natural video end, reset, and sequence wrap'
   t.mock.timers.tick(119999);
   assert.equal(video.played.length, 1);
   t.mock.timers.tick(1);
-  assert.equal(video.played.at(-1), './videos/2.mp4');
-  video.finish();
-  t.mock.timers.tick(120000);
-  assert.equal(video.played.at(-1), './videos/1.mp4');
-  video.finish();
-  t.mock.timers.tick(120000);
-  assert.equal(video.played.at(-1), './videos/2.mp4');
+  assert.equal(video.played.at(-1), playlist[1]);
+  // Every remaining clip plays in filename order, then the sequence wraps to Video 1.
+  for (let i = 2; i <= playlist.length; i++) {
+    video.finish();
+    assert.equal(cycle.currentMode, 'TIMETABLE');
+    t.mock.timers.tick(120000);
+    assert.equal(video.played.at(-1), playlist[i % playlist.length]);
+  }
+  assert.deepEqual(video.played, [...playlist, playlist[0]]);
   assert.deepEqual(modes.slice(0, 4), ['VIDEO', 'TIMETABLE', 'VIDEO', 'TIMETABLE']);
 });
 
@@ -55,15 +62,19 @@ test('failed files skip forward; all failed files return to a functioning timeta
   const video = new MediaStub();
   const cycle = new DisplayCycle(video, CONFIG);
   t.after(() => cycle.dispose());
+  const playlist = orderedVideos(CONFIG);
   cycle.startDisplayCycle();
   t.mock.timers.tick(120000);
-  video.onerror();
-  assert.equal(video.src, './videos/2.mp4');
+  for (let i = 1; i < playlist.length; i++) {
+    video.onerror();
+    assert.equal(video.src, playlist[i]);
+    assert.equal(cycle.currentMode, 'VIDEO');
+  }
   video.onerror();
   assert.equal(cycle.currentMode, 'TIMETABLE');
-  assert.equal(video.played.length, 2);
+  assert.equal(video.played.length, playlist.length);
   t.mock.timers.tick(119999);
-  assert.equal(video.played.length, 2);
+  assert.equal(video.played.length, playlist.length);
 });
 
 test('blocked unmuted autoplay retries muted and a stalled video recovers', async t => {
@@ -82,7 +93,8 @@ test('blocked unmuted autoplay retries muted and a stalled video recovers', asyn
   assert.equal(video.played.length, 2);
   t.mock.timers.tick(CONFIG.VIDEO_STALL_TIMEOUT + 1);
   cycle.checkPlayback();
-  assert.equal(cycle.nextIndex, 0); // Stall skipped to Video 2; the two-clip playlist wraps back to Video 1.
+  assert.equal(video.src, orderedVideos(CONFIG)[1]); // The stalled Video 1 is skipped; Video 2 follows it.
+  assert.equal(cycle.nextIndex, 2 % orderedVideos(CONFIG).length);
 });
 
 test('an empty video list leaves the timetable running without playback attempts', t => {

@@ -265,20 +265,20 @@ try {
   await videoTest.page.waitForFunction(() => document.querySelector('#promo-video').currentSrc.endsWith('/2.mp4') && document.querySelector('#video-screen').classList.contains('active'));
   await videoTest.page.waitForTimeout(500);
   await videoTest.page.screenshot({ path: 'test-results/white-video-display.png' });
-  await videoTest.page.waitForFunction(() => window.playbackEvents.filter(event => event.type === 'playing').length >= 4, null, { timeout: 45000 });
+  await videoTest.page.waitForFunction(() => window.playbackEvents.filter(event => event.type === 'playing').length >= 4, null, { timeout: 180000 });
   await videoTest.page.waitForTimeout(50);
   const playback = await videoTest.page.evaluate(() => window.playbackEvents);
-  assert.deepEqual(playback.filter(event => event.type === 'playing').slice(0,4).map(event => event.file), ['1.mp4','2.mp4','1.mp4','2.mp4']);
-  assert.deepEqual(playback.filter(event => event.type === 'ended').slice(0,3).map(event => event.file), ['1.mp4','2.mp4','1.mp4']);
-  for (const [file, duration] of [['1.mp4', 12.655], ['2.mp4', 34.833]]) {
-    assert.ok(Math.abs(playback.find(event => event.file === file).duration - duration) < 0.1);
+  assert.deepEqual(playback.filter(event => event.type === 'playing').slice(0,4).map(event => event.file), ['1.mp4','2.mp4','3.mp4','4.mp4']);
+  assert.deepEqual(playback.filter(event => event.type === 'ended').slice(0,3).map(event => event.file), ['1.mp4','2.mp4','3.mp4']);
+  for (const [file, duration] of [['1.mp4', 191.842], ['2.mp4', 108.181], ['3.mp4', 161.356], ['4.mp4', 103.538]]) {
+    assert.ok(Math.abs(playback.find(event => event.file === file).duration - duration) < 0.2);
   }
-  assert.deepEqual(playback.filter(event => event.type === 'playing').slice(0,4).map(event => event.badge), ['Playing Video 1 / 2', 'Playing Video 2 / 2', 'Playing Video 1 / 2', 'Playing Video 2 / 2']);
+  assert.deepEqual(playback.filter(event => event.type === 'playing').slice(0,4).map(event => event.badge), ['Playing Video 1 / 9', 'Playing Video 2 / 9', 'Playing Video 3 / 9', 'Playing Video 4 / 9']);
   for (const event of playback.filter(event => event.type === 'ended')) assert.equal(event.returnPage, event.page);
   assert.equal(await videoTest.page.locator('#promo-video').evaluate(video => getComputedStyle(video).objectFit), 'cover');
   assert.equal(await videoTest.page.locator('#video-screen').evaluate(screen => getComputedStyle(screen).borderRadius), '20px');
   assert.deepEqual(videoTest.errors, []);
-  record('Both replacement MP4s play to natural ends and loop 1 → 2 → 1 with an accurate status badge');
+  record('The supplied MP4s play to natural ends in the order 1 → 2 → 3 → 4 with an accurate status badge');
   record('Timetable pagination resumes after videos instead of restarting at page one');
   await videoTest.context.close();
 

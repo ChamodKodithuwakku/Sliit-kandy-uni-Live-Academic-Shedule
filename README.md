@@ -1,6 +1,6 @@
 # SLIIT Kandy UNI · Live academic display
 
-A fullscreen campus timetable for a 55-inch landscape Android display. The supplied Excel workbook drives the classes; the device's local date and time drive **ONGOING** and **UPCOMING** status. The screen alternates between the timetable and the two supplied campus videos.
+A fullscreen campus timetable for a 55-inch landscape Android display. The supplied Excel workbook drives the classes; the device's local date and time drive **ONGOING** and **UPCOMING** status. The screen alternates between the timetable and the nine supplied campus videos, played in the order 1 to 9.
 
 **HTML, CSS, vanilla JavaScript, locally bundled SheetJS, and HTML5 video.** No backend, database, login, API, or production build is needed. Node is used only for the optional automated development tests.
 
@@ -32,7 +32,7 @@ js/schedule.js               Time, date exceptions, and paging
 js/rooms.js                  Explicit room type mapping
 js/video.js                  Timetable/video state machine
 data/timetable.xlsx          Copy of your supplied workbook
-videos/1.mp4, 2.mp4          Optimized deployment videos
+videos/1.mp4 … 9.mp4      Optimized deployment videos, played in order
 assets/fonts/                Bundled Inter font and license
 assets/favicon.svg           Generic academic icon
 vendor/                      SheetJS 0.20.3 and its license
@@ -56,8 +56,8 @@ The original workbook and replacement 4K MP4 files remain at the project root an
 - Ongoing sessions show a green progress bar and a completion percentage, calculated from `(current time − start time) / (end time − start time)`. The values are clamped to 0–100% and updated in place; upcoming sessions have no elapsed-time bar. Progress is calculated at runtime and is never written to the workbook.
 - Locations use **COMPUTER LAB** only when explicitly configured in `ROOM_TYPE_MAPPING`. A401, A402, A403, and A404 are configured as computer labs; A406 is a **LECTURE HALL**. Unlisted rooms default to lecture halls. Lecturer names and workbook notes stay off the display.
 - Ongoing sessions appear first. When they fit, they remain on every page while upcoming sessions rotate. When they exceed a page, ongoing pages receive more screen time. Pages resume after a video, so every page remains reachable.
-- Every two minutes of timetable display, the next video plays fullscreen to its natural end. The timetable timer then starts again. The cycle is `timetable (2 min) → Video 1 → timetable (2 min) → Video 2 → repeat`.
-- Video playback defaults to muted, has no transport controls, and uses `object-fit: cover`. Its rounded frame has a floating “Playing Video 1 / 2” badge that follows the active clip. Failed or stalled videos are skipped; if every video fails, the timetable returns and the next cycle retries.
+- Every two minutes of timetable display, the next video plays fullscreen to its natural end. The timetable timer then starts again. The cycle is `timetable (2 min) → Video 1 → timetable (2 min) → Video 2 → … → Video 9`, then it returns to Video 1. Filenames fix the order, so `1.mp4` always plays first.
+- Video playback defaults to muted, has no transport controls, and uses `object-fit: cover`. Its rounded frame has a floating “Playing Video 1 / 9” badge that follows the active clip. Failed or stalled videos are skipped; if every video fails, the timetable returns and the next cycle retries.
 - The white dashboard uses blue computing badges, red business badges and icons, green ONGOING and yellow UPCOMING status colours, and a card table with seven unchanged columns. Previous/next buttons supplement automatic pagination; clicking either starts a fresh page interval. Layout spacing adapts to the display size, and reduced-motion preferences disable decorative animation.
 
 ## Replace the Excel timetable
@@ -238,7 +238,7 @@ node tools/audit-workbook.mjs
 
 On restricted environments that block child-process isolation, run `node --test --test-isolation=none tests/timetable.test.js tests/video.test.js`. Use `BROWSER_CHANNEL=msedge` in your shell environment to test with installed Edge instead of Chrome. `TEST_URL` changes the browser test's URL.
 
-The logic tests cover all 311 actual session boundaries, the nine requested sample times on all weekdays, merged sessions, faculty and room rules, date changes, pagination, two-minute timing, stalled/missing media, and video order. Browser checks exercise actual Excel fetches, local assets, responsive layouts, live updates, error recovery, and both real MP4s. Video tests accelerate playback only in the test browser; production playback speed remains normal.
+The logic tests cover all 311 actual session boundaries, the nine requested sample times on all weekdays, merged sessions, faculty and room rules, date changes, pagination, two-minute timing, stalled/missing media, and video order. Browser checks exercise actual Excel fetches, local assets, responsive layouts, live updates, error recovery, and the real MP4s in sequence. Video tests accelerate playback only in the test browser; production playback speed remains normal.
 
 Test screenshots and the full JSON workbook audit are written to `test-results/` and are excluded from deployment.
 
