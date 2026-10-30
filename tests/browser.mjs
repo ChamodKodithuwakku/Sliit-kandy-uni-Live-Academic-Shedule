@@ -53,7 +53,7 @@ try {
   const pagesBox = await display.page.locator('#pagination').boundingBox();
   assert.ok(buttonBox.width >= 24 && buttonBox.x + buttonBox.width <= pagesBox.x, JSON.stringify({ buttonBox, pagesBox }));
   record('A "+" button in the footer requests fullscreen and sits left of the page indicator');
-  assert.deepEqual(await display.page.locator('[role="columnheader"]').allTextContents(), ['MODULE CODE', 'MODULE NAME', 'LOCATION', 'START TIME', 'END TIME', 'STATUS', 'FACULTY']);
+  assert.deepEqual(await display.page.locator('[role="columnheader"]').allTextContents(), ['MODULE CODE', 'MODULE NAME', 'LOCATION', 'START TIME', 'END TIME', 'STATUS', 'DEPARTMENT']);
   assert.equal(await display.page.locator('.session-row').first().locator('[role="cell"]').count(), 7);
   assert.equal(await display.page.locator('.session-start time').first().textContent(), '08:30 AM');
   assert.equal(await display.page.locator('.session-end time').first().textContent(), '11:30 AM');
@@ -240,7 +240,7 @@ try {
   record('No-session state and a missing logo are handled; the logo area hides without breaking the display');
   await empty.context.close();
 
-  const videoTest = await newPage({ TEST_MODE: true, TIMETABLE_DURATION: 800, PAGE_DURATION: 200 });
+  const videoTest = await newPage({ TEST_MODE: true, VIDEO_ONLY_MODE: false, TIMETABLE_DURATION: 800, PAGE_DURATION: 200 });
   await videoTest.page.addInitScript(() => {
     window.playbackEvents = [];
     let mediaLoad = 0;
@@ -282,7 +282,28 @@ try {
   record('Timetable pagination resumes after videos instead of restarting at page one');
   await videoTest.context.close();
 
-  const missingVideo = await newPage({ TEST_MODE: true, TIMETABLE_DURATION: 300, VIDEOS: ['0-missing.mp4', '1.mp4'] });
+  const examOnly = await newPage({ TEST_MODE: true, TIMETABLE_DURATION: 600000 });
+  // The static test server ignores range requests, so the clips cannot be
+  // seeked to their ends. Video 1 is played out fast instead.
+  await examOnly.page.addInitScript(() => {
+    document.addEventListener('loadedmetadata', event => { if (event.target instanceof HTMLVideoElement) event.target.playbackRate = 8; }, true);
+  });
+  await examOnly.page.goto(base);
+  await examOnly.page.waitForFunction(() => document.querySelector('#video-screen').classList.contains('active') && document.querySelector('#promo-video').currentSrc.endsWith('/1.mp4'));
+  await examOnly.page.screenshot({ path: 'test-results/exam-video-only.png' });
+  // No board break is ever scheduled: when Video 1 reaches its natural end,
+  // Video 2 must be on screen immediately, with the timetable still hidden.
+  // The badge follows the "playing" event, which is the point at which Video 2
+  // is really on screen rather than merely requested.
+  await examOnly.page.waitForFunction(() => document.querySelector('#promo-video').currentSrc.endsWith('/2.mp4') && document.querySelector('#video-status-text').textContent === 'Playing Video 2 / 9', null, { timeout: 180000 });
+  await examOnly.page.locator('#video-screen.active').waitFor();
+  assert.equal(await examOnly.page.locator('#timetable-screen.video-active').count(), 1);
+  assert.equal(await examOnly.page.locator('#promo-video').evaluate(player => player.paused), false);
+  assert.deepEqual(examOnly.errors, []);
+  record('Exam video-only mode opens on Video 1 and runs clip after clip without the board');
+  await examOnly.context.close();
+
+  const missingVideo = await newPage({ TEST_MODE: true, VIDEO_ONLY_MODE: false, TIMETABLE_DURATION: 300, VIDEOS: ['0-missing.mp4', '1.mp4'] });
   await missingVideo.page.goto(base);
   await missingVideo.page.waitForFunction(() => document.querySelector('#promo-video').currentSrc.endsWith('/1.mp4') && !document.querySelector('#promo-video').paused);
   await missingVideo.page.locator('#video-screen.active').waitFor();

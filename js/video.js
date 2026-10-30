@@ -9,6 +9,9 @@ export class DisplayCycle {
     this.config = config;
     this.onModeChange = onModeChange;
     this.playlist = orderedVideos(config);
+    // Exam periods pause the board: videos play back to back and the timetable
+    // is only used as a fallback if every clip fails to load.
+    this.videoOnly = Boolean(config.VIDEO_ONLY_MODE) && this.playlist.length > 0;
     this.currentMode = 'TIMETABLE';
     this.nextIndex = 0;
     this.currentIndex = -1;
@@ -24,8 +27,11 @@ export class DisplayCycle {
   startDisplayCycle() {
     if (this.running) return;
     this.running = true;
-    this.startTimetableTimer();
     this.watchdog = setInterval(() => this.checkPlayback(), 3000);
+    // The board stays on screen until the first clip is actually playing, so
+    // video-only mode never opens on a black screen while the file loads.
+    if (this.videoOnly) this.playNextVideo();
+    else this.startTimetableTimer();
   }
 
   startTimetableTimer() {
@@ -88,13 +94,19 @@ export class DisplayCycle {
   }
 
   switchToVideo() { this.onModeChange('VIDEO'); }
-  handleVideoEnded() { this.switchToTimetable(); }
+
+  handleVideoEnded() {
+    if (!this.videoOnly) { this.switchToTimetable(); return; }
+    this.failed = 0;
+    this.playNextVideo();
+  }
 
   skipFailedVideo() {
     this.failed++;
     // Keep the timetable visible while another video loads. Bounded attempts
     // prevent a missing playlist from causing an endless retry loop.
-    this.onModeChange('TIMETABLE');
+    // Video-only mode holds the video screen so a bad clip causes no flash.
+    if (!this.videoOnly) this.onModeChange('TIMETABLE');
     if (this.failed >= this.playlist.length) this.switchToTimetable();
     else this.playNextVideo();
   }
@@ -122,7 +134,14 @@ export class DisplayCycle {
 
   resume() {
     if (!this.running) return;
-    if (this.currentMode === 'VIDEO') {
+    if (this.videoOnly) {
+      // Nothing to fall back to, so restart playback unless a clip is still
+      // loading or survived the screen sleeping. A genuinely stalled clip is
+      // left to the watchdog instead of being skipped on every wake-up.
+      if (this.currentMode === 'VIDEO' && !this.video.paused && !this.video.ended) return;
+      this.failed = 0;
+      this.playNextVideo();
+    } else if (this.currentMode === 'VIDEO') {
       // Recover from the browser suspending the decoder while the screen slept.
       this.switchToTimetable();
     } else if (this.deadline && Date.now() >= this.deadline) {
