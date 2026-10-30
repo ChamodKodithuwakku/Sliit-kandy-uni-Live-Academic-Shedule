@@ -56,6 +56,7 @@ The original workbook and replacement 4K MP4 files remain at the project root an
 - Ongoing sessions show a green progress bar and a completion percentage, calculated from `(current time − start time) / (end time − start time)`. The values are clamped to 0–100% and updated in place; upcoming sessions have no elapsed-time bar. Progress is calculated at runtime and is never written to the workbook.
 - Locations use **COMPUTER LAB** only when explicitly configured in `ROOM_TYPE_MAPPING`. A401, A402, A403, and A404 are configured as computer labs; A406 is a **LECTURE HALL**. Unlisted rooms default to lecture halls. Lecturer names and workbook notes stay off the display.
 - Ongoing sessions appear first. When they fit, they remain on every page while upcoming sessions rotate. When they exceed a page, ongoing pages receive more screen time. Pages resume after a video, so every page remains reachable.
+- **Currently in exam video-only mode** (`VIDEO_ONLY_MODE: true` in `config.js`): the nine videos play one after another, each to its natural end, and the timetable is never shown. Set `VIDEO_ONLY_MODE: false` to restore the cycle below after the exams.
 - Every two minutes of timetable display, the next video plays fullscreen to its natural end. The timetable timer then starts again. The cycle is `timetable (2 min) → Video 1 → timetable (2 min) → Video 2 → … → Video 9`, then it returns to Video 1. Filenames fix the order, so `1.mp4` always plays first.
 - Video playback defaults to muted, has no transport controls, and uses `object-fit: cover`. Its rounded frame has a floating “Playing Video 1 / 9” badge that follows the active clip. Failed or stalled videos are skipped; if every video fails, the timetable returns and the next cycle retries.
 - The white dashboard uses blue computing badges, red business badges and icons, green ONGOING and yellow UPCOMING status colours, and a card table with seven unchanged columns. Previous/next buttons supplement automatic pagination; clicking either starts a fresh page interval. Layout spacing adapts to the display size, and reduced-motion preferences disable decorative animation.
@@ -82,6 +83,8 @@ VIDEOS: ['01-open-day.mp4', '02-campus-life.mp4', '10-programmes.mp4'],
 VIDEO_MUTED: true,
 TIMETABLE_DURATION: 120000,
 ```
+
+`VIDEO_ONLY_MODE: true` pauses the timetable for exam periods: the display opens on Video 1, plays the clips back to back in filename order and repeats, and the board returns only if every video fails to load (it then retries after `TIMETABLE_DURATION`). Set it to `false` for the normal timetable/video cycle.
 
 Files are naturally sorted by filename (`2` before `10`). Rename files to change the sequence. Static hosting cannot enumerate an arbitrary directory, so the `VIDEOS` list must be updated when adding or removing files. An empty array disables video breaks.
 

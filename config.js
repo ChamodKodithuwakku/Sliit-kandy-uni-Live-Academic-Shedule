@@ -58,6 +58,10 @@ export const CONFIG = {
   // Cycle: timetable 2 min -> Video 1 -> timetable 2 min -> Video 2 -> ...
   // -> Video 9 -> back to Video 1. Filenames fix the order, 1.mp4 first.
   VIDEOS: ['1.mp4', '2.mp4', '3.mp4', '4.mp4', '5.mp4', '6.mp4', '7.mp4', '8.mp4', '9.mp4'],
+  // Exam period: videos only. Video 1 to Video 9 play back to back and repeat,
+  // and the timetable is never shown unless every video fails to load.
+  // Set back to false to resume the timetable/video cycle after the exams.
+  VIDEO_ONLY_MODE: true,
   VIDEO_MUTED: true,
   VIDEO_LOAD_TIMEOUT: 20000,
   VIDEO_STALL_TIMEOUT: 30000,
