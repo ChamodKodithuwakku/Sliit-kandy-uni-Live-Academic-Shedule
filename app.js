@@ -2,8 +2,11 @@ import { CONFIG } from './config.js';
 import { loadExcel, parseWorkbook } from './js/parser.js';
 import { evaluateSchedule, getDisplayDate, getCurrentTime, formatSessionTime, getSessionProgress, millisecondsUntilNextChange, paginateSessions } from './js/schedule.js';
 import { DisplayCycle } from './js/video.js';
+import { createRemote } from './js/remote.js';
 
 const $ = id => document.getElementById(id);
+// Live admin feed. Stays dormant until firebase-config.js is filled in.
+const remote = createRemote(CONFIG);
 let sessions = [];
 let loadState = 'loading';
 let pages = [[]];
@@ -221,6 +224,9 @@ export function updateSessionProgress() {
 export function refreshSessions(force = false) {
   if (loadState !== 'ready') { showEmpty(loadState); return; }
   const date = getDisplayDate(CONFIG);
+  // Firestore entries are rebuilt per day so dated exam sittings land on the
+  // right date; the workbook sessions stay exactly as parsed.
+  if (remote.usingRemoteTimetable) sessions = remote.sessionsFor(date);
   const state = evaluateSchedule(sessions, date, CONFIG);
   clearTimeout(boundaryTimer);
   if (!CONFIG.TEST_MODE) {
@@ -269,13 +275,57 @@ const cycle = new DisplayCycle($('promo-video'), CONFIG, mode => {
   }
 });
 
+// Live changes published from the admin panel, applied without a reload
+// wherever that is possible.
+function handleRemoteChange(change) {
+  document.documentElement.style.setProperty('--page-duration', `${CONFIG.PAGE_DURATION}ms`);
+  applyBranding();
+  if (change.playlistChanged) cycle.reload();
+  if (change.dataSource === 'excel' && !workbookLoaded) { initializeWorkbook(); return; }
+  if (remote.usingRemoteTimetable) loadState = 'ready';
+  refreshSessions(true);
+}
+
+function applyBranding() {
+  const logo = $('brand-logo');
+  if (CONFIG.LOGO_PATH && logo.getAttribute('src') !== CONFIG.LOGO_PATH) logo.src = CONFIG.LOGO_PATH;
+  if (CONFIG.DISPLAY_SUBTITLE) {
+    const tagline = document.querySelector('.brand-tagline');
+    if (tagline) tagline.textContent = CONFIG.DISPLAY_SUBTITLE;
+  }
+  if (CONFIG.CAMPUS_TITLE) setText('empty-board-note', CONFIG.CAMPUS_TITLE.toUpperCase());
+}
+
 async function initializeTimetable() {
+  if (remote.configured) {
+    try {
+      const status = await remote.start({ onChange: handleRemoteChange });
+      document.documentElement.style.setProperty('--page-duration', `${CONFIG.PAGE_DURATION}ms`);
+      applyBranding();
+      cycle.reload();
+      if (status.live && status.dataSource !== 'excel') {
+        sessions = remote.sessionsFor(getDisplayDate(CONFIG));
+        loadState = 'ready';
+        refreshSessions(true);
+        return;
+      }
+    } catch (error) {
+      if (CONFIG.DEBUG_MODE) console.warn('Live admin feed unavailable; falling back to the workbook.', error);
+    }
+  }
+  return initializeWorkbook();
+}
+
+let workbookLoaded = false;
+
+async function initializeWorkbook() {
   try {
     const workbook = await loadExcel(CONFIG);
     if (destroyed) return;
     const result = parseWorkbook(workbook, CONFIG);
     if (!result.sheets.length || !result.sessions.length) throw new Error('No usable timetable sessions found');
     sessions = result.sessions;
+    workbookLoaded = true;
     loadState = 'ready';
     if (CONFIG.DEBUG_MODE) {
       console.info('Timetable worksheets:', result.sheets);
@@ -288,7 +338,7 @@ async function initializeTimetable() {
     loadState = 'error';
     showEmpty('error');
     if (CONFIG.DEBUG_MODE) console.warn('Timetable could not be loaded', error);
-    retryTimer = setTimeout(initializeTimetable, CONFIG.LOAD_RETRY_INTERVAL);
+    retryTimer = setTimeout(initializeWorkbook, CONFIG.LOAD_RETRY_INTERVAL);
   }
 }
 
@@ -397,6 +447,7 @@ window.addEventListener('resize', () => {
 });
 window.addEventListener('pagehide', () => {
   destroyed = true;
+  remote.stop();
   cycle.dispose();
   clearInterval(pageTimer);
   clearTimeout(retryTimer);

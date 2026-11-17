@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Exam Timetable · Kandy UNI Digital Signage</title>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="admin.css">
+  <script type="module" src="js/page-exams.js"></script>
+</head>
+<body>
+<div class="shell">
+  <main class="main" hidden>
+    <div class="page-head">
+      <div>
+        <h1>Exam Timetable</h1>
+        <span class="campus" data-campus>City Campus</span>
+        <p class="count" id="count"><strong>0</strong> exam sittings</p>
+      </div>
+      <div class="head-actions" id="head-actions"></div>
+    </div>
+
+    <div id="alerts"></div>
+
+    <div class="card flush">
+      <div class="card-head" style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:flex-end">
+        <div>
+          <h2>Scheduled Examinations</h2>
+          <p class="card-note">Exams are tied to a date. On that day they appear on the display beside the normal sessions.</p>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+          <div class="field" style="margin:0">
+            <label for="filter-scope">Show</label>
+            <select id="filter-scope">
+              <option value="upcoming">Today and later</option>
+              <option value="all">Everything</option>
+              <option value="past">Past sittings</option>
+            </select>
+          </div>
+          <div class="field" style="margin:0">
+            <label for="search">Search</label>
+            <input id="search" type="text" placeholder="Subject, venue, batch…">
+          </div>
+        </div>
+      </div>
+      <div class="table-wrap" style="margin-top:16px">
+        <table class="data">
+          <thead>
+            <tr>
+              <th>Date</th><th>Time</th><th>Subject</th><th>Venue</th>
+              <th>Invigilator</th><th>Status</th><th style="text-align:right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="rows">
+            <tr class="empty-row"><td colspan="7">Loading the exam timetable…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

@@ -31,6 +31,13 @@ js/parser.js                 Browser-side Excel and merged-cell parser
 js/schedule.js               Time, date exceptions, and paging
 js/rooms.js                  Explicit room type mapping
 js/video.js                  Timetable/video state machine
+js/schema.js                 Shared data model for the display and the admin panel
+js/remote.js                 Live Firestore feed for the display (dormant until configured)
+firebase-config.js           Your Firebase keys — the only file you must edit
+firestore.rules              Database rules to publish in the Firebase console
+storage.rules                Storage rules, only needed for logo uploads
+admin/                       Administration panel (see "Admin panel" below)
+functions/                   Optional Cloud Functions for admin password resets
 data/timetable.xlsx          Copy of your supplied workbook
 videos/1.mp4 … 9.mp4      Optimized deployment videos, played in order
 assets/fonts/                Bundled Inter font and license
@@ -60,6 +67,54 @@ The original workbook and replacement 4K MP4 files remain at the project root an
 - Every two minutes of timetable display, the next video plays fullscreen to its natural end. The timetable timer then starts again. The cycle is `timetable (2 min) → Video 1 → timetable (2 min) → Video 2 → … → Video 9`, then it returns to Video 1. Filenames fix the order, so `1.mp4` always plays first.
 - Video playback defaults to muted, has no transport controls, and uses `object-fit: cover`. Its rounded frame has a floating “Playing Video 1 / 9” badge that follows the active clip. Failed or stalled videos are skipped; if every video fails, the timetable returns and the next cycle retries.
 - The white dashboard uses blue computing badges, red business badges and icons, green ONGOING and yellow UPCOMING status colours, and a card table with seven unchanged columns. Previous/next buttons supplement automatic pagination; clicking either starts a fresh page interval. Layout spacing adapts to the display size, and reduced-motion preferences disable decorative animation.
+
+## Admin panel
+
+`admin/` is a web administration panel for everything the lobby screen shows. It is plain HTML, CSS and ES modules like the display itself — no build step, no server code — and it stores its data in **Firebase** (Cloud Firestore for the data, Firebase Authentication for the logins, Firebase Storage only if you upload a logo).
+
+| Page | What it does | Who can use it |
+| --- | --- | --- |
+| Dashboard | Counts, what the board is showing right now, today's sessions, recent edits | Everyone |
+| Timetable | Add, edit, hide and delete weekly sessions; one-click import from `data/timetable.xlsx` | Editors and administrators |
+| Exam Timetable | Dated exam sittings that appear on the board on their own day | Editors and administrators |
+| Display Arrangement | The order of timetable and video blocks the screen cycles through | Administrators |
+| Campus Media | The video playlist, with Dropbox/Drive share links converted to direct playback | Administrators |
+| Display Settings | Campus title, subtitle, logo, page timings, term dates, exam mode, data source — with a live preview | Administrators |
+| Users | Create accounts, change roles, disable and delete | Administrators |
+
+### The connected project
+
+This repository is already wired to the Firebase project **`kandy-uni-timetable`** (Spark plan, Firestore in **asia-south1 / Mumbai**, Email/Password sign-in on, `firestore.rules` published). The keys are in `firebase-config.js`. A Firebase web API key is a public project identifier rather than a secret — the database is protected by the rules, not by hiding the key.
+
+Two steps are left, and both need a password only you should know:
+
+1. Open `admin/`, type the bootstrap username **`admin`** with a password of your choice and press **Sign in**. The first attempt fails because no account exists yet, and the panel then offers **Create the first administrator account** — press that.
+2. Lock the back door afterwards: set `BOOTSTRAP_USERNAME: ''` in `firebase-config.js`, and in the Firebase console change `isBootstrap()` in the Firestore rules to `return false;`. Until you do, anyone who can sign up as `admin@kandyuni.local` could give themselves an administrator record.
+
+Then open **Timetable → Import from workbook** to move the existing `data/timetable.xlsx` sessions into Firestore.
+
+### Connecting a different Firebase project
+
+1. Create a project at [console.firebase.google.com](https://console.firebase.google.com).
+2. Add a **Web app** and copy the `firebaseConfig` values into `FIREBASE_CONFIG` in **`firebase-config.js`**. That is the only file you need to edit.
+3. In the console turn on **Authentication → Sign-in method → Email/Password**.
+4. Create a **Cloud Firestore** database (production mode is fine).
+5. Open **Firestore → Rules**, paste the contents of `firestore.rules`, and publish. If you plan to upload a logo, do the same with `storage.rules` under **Storage → Rules**.
+6. Follow the two steps above to create the first administrator.
+
+Sign-in uses a username, not an email address. `lakshan` becomes `lakshan@kandyuni.local` for Firebase behind the scenes; change `USERNAME_DOMAIN` if you prefer another suffix, or type a full email address instead.
+
+### How the display picks up the changes
+
+`js/remote.js` subscribes to Firestore and re-renders the board within a few seconds of any save — no reload, no restart. Page timings, row counts, term dates, the logo, the subtitle, exam mode and the video playlist all follow Display Settings and Display Arrangement, overriding the matching values in `config.js`.
+
+**The workbook is still the safety net.** While the Firestore timetable collection is empty — as it is until you import or add entries — the board keeps parsing `data/timetable.xlsx` exactly as it always has, even though Firebase is connected. The first saved entry takes over. Display Settings also has a **Timetable source** switch, so you can force the workbook back at any time without touching any code. Clearing the keys in `firebase-config.js` puts everything back to the original file-based setup.
+
+To move the existing workbook into Firestore, open **Timetable → Import from workbook**. It runs the same parser the display uses, skips anything already there, and adds the rest as visible entries for you to fill in lecturers and intakes.
+
+### Password resets
+
+The Firebase client SDK cannot change another user's password, by design. Everything else in the Users page works without a backend; deploy the optional callables in `functions/` if you want the **Reset** button to work (see `functions/README.md`), otherwise reset passwords in the Firebase console.
 
 ## Replace the Excel timetable
 

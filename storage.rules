@@ -1,0 +1,19 @@
+rules_version = '2';
+
+// Firebase console -> Storage -> Rules. Only needed if you upload the campus
+// logo from the Display Settings page (ADMIN_OPTIONS.USE_STORAGE = true).
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /branding/{file} {
+      // The TV display loads the logo without signing in.
+      allow read: if true;
+      allow write: if request.auth != null
+        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin'
+        && request.resource.size < 8 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Timetable Management · Kandy UNI Digital Signage</title>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="admin.css">
+  <script type="module" src="js/page-timetable.js"></script>
+</head>
+<body>
+<div class="shell">
+  <main class="main" hidden>
+    <div class="page-head">
+      <div>
+        <h1>Timetable Management</h1>
+        <span class="campus" data-campus>City Campus</span>
+        <p class="count" id="count"><strong>0</strong> weekly schedule entries</p>
+      </div>
+      <div class="head-actions" id="head-actions"></div>
+    </div>
+
+    <div id="alerts"></div>
+
+    <div class="card flush">
+      <div class="card-head" style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:flex-end">
+        <div>
+          <h2>Weekly Timetable</h2>
+          <p class="card-note">Display order runs Monday through Sunday, then by start time.</p>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+          <div class="field" style="margin:0">
+            <label for="filter-day">Day</label>
+            <select id="filter-day"><option value="">All days</option></select>
+          </div>
+          <div class="field" style="margin:0">
+            <label for="search">Search</label>
+            <input id="search" type="text" placeholder="Subject, venue, lecturer…">
+          </div>
+        </div>
+      </div>
+      <div class="table-wrap" style="margin-top:16px">
+        <table class="data">
+          <thead>
+            <tr>
+              <th>Day</th><th>Time</th><th>Subject</th><th>Venue</th>
+              <th>Lecturer</th><th>Status</th><th style="text-align:right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="rows">
+            <tr class="empty-row"><td colspan="7">Loading the timetable…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

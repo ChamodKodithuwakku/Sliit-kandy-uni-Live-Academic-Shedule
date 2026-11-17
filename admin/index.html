@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · Kandy UNI Digital Signage</title>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="admin.css">
+  <script type="module" src="js/page-login.js"></script>
+</head>
+<body>
+  <div class="login-page">
+    <section class="login-art">
+      <img src="../assets/logo.png" alt="SLIIT Kandy UNI">
+      <div>
+        <h2>Digital Signage<br>Administration</h2>
+        <p>Manage the weekly timetable, exam schedule, campus videos and everything the lobby display shows — from one place.</p>
+      </div>
+      <div class="serif">HERITAGE | KNOWLEDGE | IMPACT</div>
+    </section>
+
+    <section class="login-form">
+      <div class="login-box">
+        <h1>Sign in</h1>
+        <p class="sub">Use the username your administrator gave you.</p>
+        <div id="notice"></div>
+        <form id="login-form" autocomplete="on">
+          <div class="field">
+            <label for="username">Username</label>
+            <input id="username" name="username" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="lakshan" required>
+          </div>
+          <div class="field">
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" autocomplete="current-password" placeholder="••••••••" required>
+          </div>
+          <button id="submit" class="btn btn-primary btn-block" type="submit">Sign in</button>
+          <button id="bootstrap" class="btn btn-block" type="button" hidden style="margin-top:10px">Create the first administrator account</button>
+        </form>
+        <p class="help" style="margin-top:22px;color:#64748b;font-size:12.5px">
+          Forgot your password? An administrator can reset it from the Users page.
+        </p>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

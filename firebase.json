@@ -1,0 +1,30 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "admin-helpers",
+      "ignore": ["node_modules", ".git", "*.local"]
+    }
+  ],
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**",
+      "functions/**",
+      "tests/**",
+      "tools/**",
+      "docs/**",
+      "updates/**",
+      "*.mp4",
+      "*.xlsx"
+    ]
+  }
+}

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard · Kandy UNI Digital Signage</title>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="admin.css">
+  <script type="module" src="js/page-dashboard.js"></script>
+</head>
+<body>
+<div class="shell">
+  <main class="main" hidden>
+    <div class="page-head">
+      <div>
+        <h1>Dashboard</h1>
+        <span class="campus" data-campus>City Campus</span>
+        <p class="count" id="greeting"></p>
+      </div>
+      <div class="head-actions" id="head-actions"></div>
+    </div>
+
+    <div id="alerts"></div>
+
+    <div class="grid cols-4" id="stats"></div>
+
+    <div class="grid cols-2 section-gap">
+      <div class="card flush">
+        <div class="card-head">
+          <h2>What the display is showing</h2>
+          <p class="card-note">The board follows this order and repeats it all day.</p>
+        </div>
+        <div class="card-body" id="now-showing"></div>
+      </div>
+      <div class="card flush">
+        <div class="card-head">
+          <h2 id="today-title">Today's sessions</h2>
+          <p class="card-note" id="today-note">Taken from the weekly timetable, in display order.</p>
+        </div>
+        <div class="table-wrap">
+          <table class="data">
+            <thead><tr><th>Time</th><th>Subject</th><th>Venue</th><th>Status</th></tr></thead>
+            <tbody id="today-rows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-gap">
+      <h2>Recently changed</h2>
+      <p class="card-note">The last ten edits anyone made to the timetable or exam schedule.</p>
+      <div class="table-wrap" style="margin:0 -22px -22px">
+        <table class="data">
+          <thead><tr><th>Changed</th><th>Entry</th><th>Where</th><th>By</th></tr></thead>
+          <tbody id="recent-rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

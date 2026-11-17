@@ -1,4 +1,7 @@
 export function orderedVideos(config) {
+  // A playlist published from the admin panel keeps the order set there; the
+  // local VIDEOS list falls back to numeric filename order.
+  if (Array.isArray(config.VIDEO_PLAYLIST)) return [...new Set(config.VIDEO_PLAYLIST)].filter(Boolean);
   return [...new Set(config.VIDEOS)].sort((a, b) => a.split('/').pop().localeCompare(b.split('/').pop(), undefined, { numeric: true, sensitivity: 'base' }))
     .map(file => /^(?:https?:\/\/|\.\/|\/|videos\/)/.test(file) ? file : `${config.VIDEO_FOLDER}${file}`);
 }
@@ -32,6 +35,24 @@ export class DisplayCycle {
     // video-only mode never opens on a black screen while the file loads.
     if (this.videoOnly) this.playNextVideo();
     else this.startTimetableTimer();
+  }
+
+  /**
+   * Picks up a playlist or exam-mode change published from the admin panel
+   * without reloading the page. Returns true when something actually changed.
+   */
+  reload() {
+    const playlist = orderedVideos(this.config);
+    const videoOnly = Boolean(this.config.VIDEO_ONLY_MODE) && playlist.length > 0;
+    if (playlist.join('|') === this.playlist.join('|') && videoOnly === this.videoOnly) return false;
+    this.playlist = playlist;
+    this.videoOnly = videoOnly;
+    this.nextIndex = 0;
+    this.failed = 0;
+    if (!this.running) return true;
+    if (videoOnly || this.currentMode === 'VIDEO') this.playNextVideo();
+    else this.switchToTimetable();
+    return true;
   }
 
   startTimetableTimer() {
