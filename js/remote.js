@@ -20,6 +20,9 @@ export function createRemote(config) {
     arrangement: { ...DEFAULT_ARRANGEMENT }
   };
   let handlers = {};
+  // VIDEO_ONLY_MODE: true in config.js forces exam mode on for this deployment,
+  // whatever the admin panel says. The admin toggle can still switch it on.
+  const forcedVideoOnly = Boolean(config.VIDEO_ONLY_MODE);
   let unsubscribes = [];
 
   /** Sessions for one calendar day, ready for evaluateSchedule(). */
@@ -50,7 +53,8 @@ export function createRemote(config) {
     config.PAGE_DURATION = Math.max(4, Number(settings.pageDuration) || DEFAULT_SETTINGS.pageDuration) * 1000;
     config.TIMETABLE_DURATION = Math.max(20, Number(settings.timetableDuration) || DEFAULT_SETTINGS.timetableDuration) * 1000;
     config.MAX_ROWS = Math.max(2, Number(settings.maxRows) || DEFAULT_SETTINGS.maxRows);
-    config.VIDEO_ONLY_MODE = Boolean(settings.videoOnlyMode);
+    const videoOnly = forcedVideoOnly || Boolean(settings.videoOnlyMode);
+    config.VIDEO_ONLY_MODE = videoOnly;
     config.VIDEO_MUTED = settings.videoMuted !== false;
     config.ACTIVE_DATE_RANGE = { start: settings.activeFrom || null, end: settings.activeTo || null };
     if (settings.logoUrl) config.LOGO_PATH = settings.logoUrl;
@@ -63,7 +67,10 @@ export function createRemote(config) {
     const timetableBlock = sequence.find(segment => segment.type === 'timetable');
     if (timetableBlock?.duration) config.TIMETABLE_DURATION = Math.max(20, Number(timetableBlock.duration)) * 1000;
     const videosOn = sequence.some(segment => segment.type === 'videos');
-    config.VIDEO_PLAYLIST = videosOn || settings.videoOnlyMode ? playlist() : [];
+    // With no clips in Campus Media yet, fall back to the local videos/ files in
+    // config.js VIDEOS instead of an empty playlist.
+    const clips = playlist();
+    config.VIDEO_PLAYLIST = videosOn || videoOnly ? (clips.length ? clips : undefined) : [];
   }
 
   /**
