@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>User Management · Kandy UNI Digital Signage</title>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="admin.css">
+  <script type="module" src="js/page-users.js"></script>
+</head>
+<body>
+<div class="shell">
+  <main class="main" hidden>
+    <div class="page-head">
+      <div>
+        <h1>User Management</h1>
+        <span class="campus" data-campus>City Campus</span>
+      </div>
+      <div class="head-actions" id="head-actions"></div>
+    </div>
+
+    <div id="alerts"></div>
+
+    <div class="grid cols-2">
+      <div class="card">
+        <h2>Add user</h2>
+        <p class="card-note">Editors can manage the weekly timetable and the exam timetable. Campus Media, Display Arrangement, Display Settings and User Management are Administrator-only.</p>
+        <div id="form" style="margin-top:18px"></div>
+      </div>
+
+      <div class="card flush">
+        <div class="card-head">
+          <h2>System Users</h2>
+          <p class="card-note" id="count">Loading accounts…</p>
+        </div>
+        <div class="card-body"><div class="list" id="list"></div></div>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

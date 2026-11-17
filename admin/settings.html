@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Display Settings · Kandy UNI Digital Signage</title>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="admin.css">
+  <script type="module" src="js/page-settings.js"></script>
+</head>
+<body>
+<div class="shell">
+  <main class="main" hidden>
+    <div class="page-head">
+      <div>
+        <h1>Display Settings</h1>
+        <span class="campus" data-campus>City Campus</span>
+      </div>
+      <div class="head-actions" id="head-actions"></div>
+    </div>
+
+    <div id="alerts"></div>
+
+    <div class="grid cols-2">
+      <div class="card">
+        <h2>TV Display Configuration</h2>
+        <p class="card-note">The slideshow starts with today's complete timetable, continues through the upcoming timetable pages, then plays the enabled campus videos.</p>
+        <div id="form" style="margin-top:18px"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+          <button id="save" class="btn btn-primary btn-wide" type="button">Save settings</button>
+          <button id="revert" class="btn btn-ghost" type="button">Undo my changes</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <h2>Live Timetable Preview</h2>
+          <p class="card-note">The preview updates immediately while you adjust the settings.</p>
+          <div class="preview-frame" id="preview" style="margin-top:16px"></div>
+          <a id="open-display" class="btn btn-primary btn-block" style="margin-top:14px" href="../index.html" target="_blank" rel="noopener">Open Full Display Preview</a>
+        </div>
+        <div class="card section-gap">
+          <h2>Where the display reads from</h2>
+          <div id="source-note" style="margin-top:10px"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Campus Media · Kandy UNI Digital Signage</title>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="admin.css">
+  <script type="module" src="js/page-media.js"></script>
+</head>
+<body>
+<div class="shell">
+  <main class="main" hidden>
+    <div class="page-head">
+      <div>
+        <h1>Campus Media</h1>
+        <span class="campus" data-campus>City Campus</span>
+        <p class="count" id="count"><strong>0</strong> clips in the library</p>
+      </div>
+      <div class="head-actions" id="head-actions"></div>
+    </div>
+
+    <div id="alerts"></div>
+
+    <div class="grid cols-2">
+      <div class="card">
+        <h2>Add a clean video</h2>
+        <p class="card-note">Recommended for the TV display: no account name, no video title overlay and no player logo. The board uses the browser's own video player with the controls hidden, so only the picture is visible.</p>
+
+        <div class="alert alert-info" style="margin-top:16px">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5M12 16h.01"/></svg>
+          <div>
+            <strong>Easy setup</strong>
+            <ol style="margin:7px 0 0;padding-left:18px;line-height:1.75">
+              <li>Upload the MP4 to Dropbox or Google Drive.</li>
+              <li>Encode as <strong>MP4, H.264 (AVC) video + AAC audio</strong> — older Android smartboards cannot play H.265/HEVC even when PCs and phones can.</li>
+              <li>Click <strong>Share</strong> and copy the share link.</li>
+              <li>Paste it below — the share link is converted to direct playback automatically.</li>
+            </ol>
+            <p style="margin:8px 0 0">A file already sitting in the project's <code>videos/</code> folder works too: type <code>videos/1.mp4</code>.</p>
+          </div>
+        </div>
+
+        <div id="form" style="margin-top:18px"></div>
+      </div>
+
+      <div class="card flush">
+        <div class="card-head">
+          <h2>Video Playlist</h2>
+          <p class="card-note">Played top to bottom whenever the display reaches a video block.</p>
+        </div>
+        <div class="card-body"><div class="list" id="library"></div></div>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

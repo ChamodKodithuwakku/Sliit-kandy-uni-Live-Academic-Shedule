@@ -24,8 +24,8 @@ test('video order uses natural filename sorting', () => {
   assert.deepEqual(orderedVideos({ ...CONFIG, VIDEOS: ['10.mp4', '2.mp4', '1.mp4', '2.mp4'] }), ['./videos/1.mp4', './videos/2.mp4', './videos/10.mp4']);
 });
 
-test('the configured playlist is the nine supplied videos in order', () => {
-  assert.deepEqual(orderedVideos(CONFIG), Array.from({ length: 9 }, (_, i) => `./videos/${i + 1}.mp4`));
+test('the configured playlist skips the removed Video 3', () => {
+  assert.deepEqual(orderedVideos(CONFIG), [1, 2, 4, 5, 6, 7, 8, 9].map(n => `./videos/${n}.mp4`));
 });
 
 test('exact two-minute board timer, natural video end, reset, and sequence wrap', t => {

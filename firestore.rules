@@ -1,0 +1,74 @@
+rules_version = '2';
+
+// Publish these in Firebase console -> Firestore Database -> Rules.
+//
+// The TV display reads without signing in, so the timetable, exams, videos and
+// settings are world-readable. Everything that changes them needs an account.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+    function hasProfile() {
+      return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+    function profile() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    function active() {
+      return hasProfile() && profile().active != false;
+    }
+    function isAdmin() {
+      return active() && profile().role == 'admin';
+    }
+    function isEditor() {
+      return active() && (profile().role == 'editor' || profile().role == 'admin');
+    }
+
+    // FIRST RUN ONLY. Lets the bootstrap account named in firebase-config.js
+    // create its own administrator record. Change the address to match your
+    // BOOTSTRAP_USERNAME, then set this function to `return false;` once your
+    // real administrator exists.
+    function isBootstrap() {
+      return signedIn() && request.auth.token.email == 'admin@kandyuni.local';
+    }
+
+    // ---- what the lobby display reads -------------------------------------
+    match /timetable/{entryId} {
+      allow read: if true;
+      allow create, update, delete: if isEditor();
+    }
+
+    match /exams/{examId} {
+      allow read: if true;
+      allow create, update, delete: if isEditor();
+    }
+
+    match /videos/{videoId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // settings/display and settings/arrangement
+    match /settings/{documentId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ---- accounts ---------------------------------------------------------
+    match /users/{userId} {
+      allow read: if signedIn() && (request.auth.uid == userId || isAdmin());
+      allow create: if isAdmin() || (isBootstrap() && request.auth.uid == userId);
+      allow update: if isAdmin()
+        || (request.auth.uid == userId
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastSignIn', 'updatedAt', 'updatedBy']));
+      allow delete: if isAdmin() && request.auth.uid != userId;
+    }
+
+    // Anything not named above is closed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

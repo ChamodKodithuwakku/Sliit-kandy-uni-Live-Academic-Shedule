@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Display Arrangement · Kandy UNI Digital Signage</title>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="admin.css">
+  <script type="module" src="js/page-arrangement.js"></script>
+</head>
+<body>
+<div class="shell">
+  <main class="main" hidden>
+    <div class="page-head">
+      <div>
+        <h1>Display Arrangement</h1>
+        <span class="campus" data-campus>City Campus</span>
+        <p class="count">The order the lobby screen runs through, over and over, all day.</p>
+      </div>
+      <div class="head-actions" id="head-actions"></div>
+    </div>
+
+    <div id="alerts"></div>
+
+    <div class="grid cols-2">
+      <div class="card flush">
+        <div class="card-head">
+          <h2>Playback Order</h2>
+          <p class="card-note">Move a block up or down to change what comes first. Turning a block off skips it without deleting it.</p>
+        </div>
+        <div class="card-body"><div class="list" id="sequence"></div></div>
+        <div class="card-foot">
+          <button id="save" class="btn btn-primary" type="button">Save arrangement</button>
+          <button id="add" class="btn" type="button">Add a block</button>
+          <button id="reset" class="btn btn-ghost" type="button">Restore the default order</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <h2>How a cycle runs</h2>
+          <p class="card-note">A single pass through the blocks below, then it starts again from the top.</p>
+          <div id="cycle-preview" style="margin-top:14px"></div>
+        </div>
+        <div class="card section-gap">
+          <h2>Exam period</h2>
+          <p class="card-note">Turn <strong>Exam mode</strong> on under Display Settings to pause the timetable completely and play only campus videos — the arrangement below is ignored until you turn it off again.</p>
+          <div id="exam-state" style="margin-top:12px"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>
