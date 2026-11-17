@@ -148,13 +148,15 @@ test('video-only mode skips a bad clip without a board flash and recovers if all
     assert.equal(cycle.currentMode, 'VIDEO');
   }
   assert.deepEqual(new Set(modes), new Set(['VIDEO']));
-  // Only an unplayable playlist falls back to the timetable, and the next
-  // cycle retries the videos.
+  // Even an unplayable playlist never brings the timetable back: the video
+  // screen stays up and the whole playlist is retried after a short pause.
   video.onerror();
-  assert.equal(cycle.currentMode, 'TIMETABLE');
-  t.mock.timers.tick(CONFIG.TIMETABLE_DURATION);
   assert.equal(cycle.currentMode, 'VIDEO');
+  assert.equal(video.played.length, playlist.length);
+  t.mock.timers.tick(10000);
   assert.equal(video.played.length, playlist.length + 1);
+  assert.equal(video.src, playlist[0]);
+  assert.deepEqual(new Set(modes), new Set(['VIDEO']));
 });
 
 test('video-only mode keeps a playing clip through a wake-up and restarts a stopped one', t => {

@@ -31,10 +31,12 @@ export class DisplayCycle {
     if (this.running) return;
     this.running = true;
     this.watchdog = setInterval(() => this.checkPlayback(), 3000);
-    // The board stays on screen until the first clip is actually playing, so
-    // video-only mode never opens on a black screen while the file loads.
-    if (this.videoOnly) this.playNextVideo();
-    else this.startTimetableTimer();
+    // Video-only mode covers the timetable from the very first frame, so the
+    // board never appears, not even while the first clip loads.
+    if (this.videoOnly) {
+      this.playNextVideo();
+      this.switchToVideo();
+    } else this.startTimetableTimer();
   }
 
   /**
@@ -128,8 +130,15 @@ export class DisplayCycle {
     // prevent a missing playlist from causing an endless retry loop.
     // Video-only mode holds the video screen so a bad clip causes no flash.
     if (!this.videoOnly) this.onModeChange('TIMETABLE');
-    if (this.failed >= this.playlist.length) this.switchToTimetable();
-    else this.playNextVideo();
+    if (this.failed < this.playlist.length) this.playNextVideo();
+    else if (!this.videoOnly) this.switchToTimetable();
+    else {
+      // Video-only mode never falls back to the timetable: it stays on the
+      // video screen and tries the whole playlist again after a short pause.
+      this.failed = 0;
+      clearTimeout(this.timetableTimer);
+      this.timetableTimer = setTimeout(() => this.playNextVideo(), this.config.VIDEO_RETRY_DELAY ?? 10000);
+    }
   }
 
   switchToTimetable() {
