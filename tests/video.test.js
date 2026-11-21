@@ -18,14 +18,41 @@ class MediaStub {
 
 // The deployed config is in exam video-only mode. These tests cover the
 // timetable/video cycle, so they opt back into it explicitly.
-const CYCLE_CONFIG = { ...CONFIG, VIDEO_ONLY_MODE: false };
+// The cycle tests use the multi-clip playlist so they do not depend on what
+// the deployed config.js happens to play.
+const MULTI_CONFIG = { ...CONFIG, VIDEOS: ['1.mp4', '2.mp4', '4.mp4', '5.mp4', '6.mp4', '7.mp4', '8.mp4', '9.mp4'] };
+const CYCLE_CONFIG = { ...MULTI_CONFIG, VIDEO_ONLY_MODE: false };
 
 test('video order uses natural filename sorting', () => {
   assert.deepEqual(orderedVideos({ ...CONFIG, VIDEOS: ['10.mp4', '2.mp4', '1.mp4', '2.mp4'] }), ['./videos/1.mp4', './videos/2.mp4', './videos/10.mp4']);
 });
 
-test('the configured playlist skips the removed Video 3', () => {
-  assert.deepEqual(orderedVideos(CONFIG), [1, 2, 4, 5, 6, 7, 8, 9].map(n => `./videos/${n}.mp4`));
+test('the multi-clip playlist skips the removed Video 3', () => {
+  assert.deepEqual(orderedVideos(MULTI_CONFIG), [1, 2, 4, 5, 6, 7, 8, 9].map(n => `./videos/${n}.mp4`));
+});
+
+test('the deployed board plays only Video 0, looping without a reload', t => {
+  t.mock.timers.enable({ apis: ['setTimeout', 'setInterval', 'Date'] });
+  assert.deepEqual(orderedVideos(CONFIG), ['./videos/0.mp4']);
+  const video = new MediaStub();
+  const modes = [];
+  const cycle = new DisplayCycle(video, CONFIG, mode => modes.push(mode));
+  t.after(() => cycle.dispose());
+  cycle.startDisplayCycle();
+  assert.deepEqual(video.played, ['./videos/0.mp4']);
+  assert.equal(video.loop, true);
+  t.mock.timers.tick(30 * 60 * 1000);
+  assert.equal(cycle.currentMode, 'VIDEO');
+  assert.deepEqual(new Set(modes), new Set(['VIDEO']));
+});
+
+test('a multi-clip playlist does not loop a single clip', () => {
+  const video = new MediaStub();
+  const cycle = new DisplayCycle(video, MULTI_CONFIG);
+  cycle.running = true;
+  cycle.playNextVideo();
+  assert.equal(video.loop, false);
+  cycle.dispose();
 });
 
 test('exact two-minute board timer, natural video end, reset, and sequence wrap', t => {
@@ -33,7 +60,7 @@ test('exact two-minute board timer, natural video end, reset, and sequence wrap'
   const video = new MediaStub();
   const modes = [];
   const cycle = new DisplayCycle(video, CYCLE_CONFIG, mode => modes.push(mode));
-  const playlist = orderedVideos(CONFIG);
+  const playlist = orderedVideos(MULTI_CONFIG);
   t.after(() => cycle.dispose());
   cycle.startDisplayCycle();
   t.mock.timers.tick(119999);
@@ -68,7 +95,7 @@ test('failed files skip forward; all failed files return to a functioning timeta
   const video = new MediaStub();
   const cycle = new DisplayCycle(video, CYCLE_CONFIG);
   t.after(() => cycle.dispose());
-  const playlist = orderedVideos(CONFIG);
+  const playlist = orderedVideos(MULTI_CONFIG);
   cycle.startDisplayCycle();
   t.mock.timers.tick(120000);
   for (let i = 1; i < playlist.length; i++) {
@@ -99,8 +126,8 @@ test('blocked unmuted autoplay retries muted and a stalled video recovers', asyn
   assert.equal(video.played.length, 2);
   t.mock.timers.tick(CONFIG.VIDEO_STALL_TIMEOUT + 1);
   cycle.checkPlayback();
-  assert.equal(video.src, orderedVideos(CONFIG)[1]); // The stalled Video 1 is skipped; Video 2 follows it.
-  assert.equal(cycle.nextIndex, 2 % orderedVideos(CONFIG).length);
+  assert.equal(video.src, orderedVideos(MULTI_CONFIG)[1]); // The stalled Video 1 is skipped; Video 2 follows it.
+  assert.equal(cycle.nextIndex, 2 % orderedVideos(MULTI_CONFIG).length);
 });
 
 test('an empty video list leaves the timetable running without playback attempts', t => {
@@ -118,8 +145,8 @@ test('exam video-only mode plays clip after clip and never shows the board', t =
   t.mock.timers.enable({ apis: ['setTimeout', 'setInterval', 'Date'] });
   const video = new MediaStub();
   const modes = [];
-  const cycle = new DisplayCycle(video, CONFIG, mode => modes.push(mode));
-  const playlist = orderedVideos(CONFIG);
+  const cycle = new DisplayCycle(video, MULTI_CONFIG, mode => modes.push(mode));
+  const playlist = orderedVideos(MULTI_CONFIG);
   t.after(() => cycle.dispose());
   cycle.startDisplayCycle();
   // No two-minute board wait: Video 1 starts as soon as the display opens.
@@ -138,8 +165,8 @@ test('video-only mode skips a bad clip without a board flash and recovers if all
   t.mock.timers.enable({ apis: ['setTimeout', 'setInterval', 'Date'] });
   const video = new MediaStub();
   const modes = [];
-  const cycle = new DisplayCycle(video, CONFIG, mode => modes.push(mode));
-  const playlist = orderedVideos(CONFIG);
+  const cycle = new DisplayCycle(video, MULTI_CONFIG, mode => modes.push(mode));
+  const playlist = orderedVideos(MULTI_CONFIG);
   t.after(() => cycle.dispose());
   cycle.startDisplayCycle();
   for (let i = 1; i < playlist.length; i++) {
@@ -162,7 +189,7 @@ test('video-only mode skips a bad clip without a board flash and recovers if all
 test('video-only mode keeps a playing clip through a wake-up and restarts a stopped one', t => {
   t.mock.timers.enable({ apis: ['setTimeout', 'setInterval', 'Date'] });
   const video = new MediaStub();
-  const cycle = new DisplayCycle(video, CONFIG);
+  const cycle = new DisplayCycle(video, MULTI_CONFIG);
   t.after(() => cycle.dispose());
   cycle.startDisplayCycle();
   cycle.resume();

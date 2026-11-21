@@ -83,7 +83,8 @@ export class DisplayCycle {
     const active = () => this.running && this.generation === token;
     this.video.muted = this.config.VIDEO_MUTED;
     this.video.defaultMuted = this.config.VIDEO_MUTED;
-    this.video.loop = false;
+    // A single clip in video-only mode loops natively, with no reload gap.
+    this.video.loop = this.videoOnly && this.playlist.length === 1;
     this.video.onended = () => { if (active()) this.handleVideoEnded(); };
     this.video.onerror = () => { if (active()) this.skipFailedVideo(); };
     this.video.onplaying = () => {
