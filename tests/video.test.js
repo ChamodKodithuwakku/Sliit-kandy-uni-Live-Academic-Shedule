@@ -31,19 +31,24 @@ test('the multi-clip playlist skips the removed Video 3', () => {
   assert.deepEqual(orderedVideos(MULTI_CONFIG), [1, 2, 4, 5, 6, 7, 8, 9].map(n => `./videos/${n}.mp4`));
 });
 
-test('the deployed board plays only Video 0, looping without a reload', t => {
-  t.mock.timers.enable({ apis: ['setTimeout', 'setInterval', 'Date'] });
-  assert.deepEqual(orderedVideos(CONFIG), ['./videos/0.mp4']);
+test('the deployed board plays Videos 1-9 (no 3) in order, each once, then repeats', () => {
+  assert.deepEqual(orderedVideos(CONFIG), orderedVideos(MULTI_CONFIG));
   const video = new MediaStub();
-  const modes = [];
-  const cycle = new DisplayCycle(video, CONFIG, mode => modes.push(mode));
-  t.after(() => cycle.dispose());
+  const cycle = new DisplayCycle(video, CONFIG);
+  const playlist = orderedVideos(CONFIG);
   cycle.startDisplayCycle();
-  assert.deepEqual(video.played, ['./videos/0.mp4']);
+  assert.equal(video.loop, false);
+  for (let i = 1; i <= playlist.length; i++) video.finish();
+  assert.deepEqual(video.played, [...playlist, playlist[0]]);
+  cycle.dispose();
+});
+
+test('a single clip in video-only mode loops without a reload', () => {
+  const video = new MediaStub();
+  const cycle = new DisplayCycle(video, { ...CONFIG, VIDEOS: ['1.mp4'] });
+  cycle.startDisplayCycle();
   assert.equal(video.loop, true);
-  t.mock.timers.tick(30 * 60 * 1000);
-  assert.equal(cycle.currentMode, 'VIDEO');
-  assert.deepEqual(new Set(modes), new Set(['VIDEO']));
+  cycle.dispose();
 });
 
 test('a multi-clip playlist does not loop a single clip', () => {

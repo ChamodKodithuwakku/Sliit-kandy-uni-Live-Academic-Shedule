@@ -54,10 +54,8 @@ export const CONFIG = {
   // '2026-09-23': { useDay: 'Monday', exclude: ['JUL DEC 2026!C4'], add: [] }
   DATE_EXCEPTIONS: {},
   VIDEO_FOLDER: './videos/',
-  // Only 0.mp4 plays, looping continuously. The other clips (1.mp4 - 9.mp4) stay
-  // in videos/; to bring them back use:
-  // ['1.mp4', '2.mp4', '4.mp4', '5.mp4', '6.mp4', '7.mp4', '8.mp4', '9.mp4']
-  VIDEOS: ['0.mp4'],
+  // Played in numeric order, each once, then the list repeats from 1.mp4.
+  VIDEOS: ['1.mp4', '2.mp4', '4.mp4', '5.mp4', '6.mp4', '7.mp4', '8.mp4', '9.mp4'],
   // Exam period: videos only. The playlist plays back to back and repeats (a
   // single clip loops seamlessly), and the timetable is never shown.
   // Set back to false to resume the timetable/video cycle after the exams.
